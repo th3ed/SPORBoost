@@ -21,6 +21,7 @@ class SparseRandom(TransformerMixin):
         self.p = p
         self.d = d
         self.s = s
+        self.col_idx = None
         
         # sparse random projection mapping
         self.A = np.random.choice([-1, 0, 1],
@@ -34,4 +35,9 @@ class SparseRandom(TransformerMixin):
         return self
     
     def transform(self, X):
-        return(X @ self.A)
+        if self.col_idx is None:
+            return(X @ self.A)
+        return X @ self.A[:, self.col_idx]
+    
+    def select(self, col_idx):
+        self.col_idx = col_idx
