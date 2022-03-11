@@ -1,6 +1,13 @@
-from sklearn.base import TransformerMixin
 import numpy as np
-    
+from numba import int32, float32
+from numba.experimental import jitclass
+from sklearn.base import TransformerMixin
+
+@jitclass([
+    ('p', int32),
+    ('d', int32),
+    ('s', float32),
+])
 class SparseRandom(TransformerMixin):
     def __init__(self, p, d, s = 3):
         # ////////////////////////////////////////////

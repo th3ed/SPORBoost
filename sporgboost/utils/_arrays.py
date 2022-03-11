@@ -1,7 +1,7 @@
-from numba import njit
+from numba import njit, prange
 import numpy as np
 
-@njit
+@njit(parallel = True)
 def row_cumsum(X):
     '''Numba optimized implementation of row-cumsum
     This function is needed to allow broader functions such as find_split compile with numba. Numba
@@ -15,10 +15,20 @@ def row_cumsum(X):
         An array with the same shape as X with cumsum(axis=0) values
     '''
     out = np.empty(X.shape)
-    for idx_col in range(0, X.shape[1]):
+    for idx_col in prange(0, X.shape[1]):
         out[:, idx_col] = X[:, idx_col].cumsum()
-    return(out)
+    return out
 
+@njit
+def row_mean(X):
+    '''Numba optimized implementation of row-mean
+    Args:
+        X (Array): The array to mean(axis=0) over
+    
+    Returns:
+        An array with the same shape as X with mean(axis=0) values
+    '''
+    return X.sum(axis=0) / X.shape[0]
 
 @njit
 def row_norm(y):

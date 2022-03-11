@@ -1,6 +1,6 @@
-from sklearn.base import TransformerMixin
 import numpy as np
 from sklearn.decomposition import PCA
+from sklearn.base import TransformerMixin
     
 class Rotational(TransformerMixin):
     def __init__(self, p, K):

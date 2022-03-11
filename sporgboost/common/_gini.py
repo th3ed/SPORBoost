@@ -1,5 +1,6 @@
 from numba import njit
 import numpy as np
+from ..utils import row_cumsum
 
 @njit
 def gini_impunity(y):
@@ -8,7 +9,8 @@ def gini_impunity(y):
     Args:
         y (Array): 2-d vector of normalized 
     '''
-    return(1 - (y ** 2).sum(axis=1))
+    n = np.arange(1, y.shape[0] + 1).reshape((-1,1))
+    return 1 - ((row_cumsum(y) / n) ** 2).sum(axis=1)
 
 @njit
 def weighted_gini(gini_left, gini_right):
@@ -25,3 +27,17 @@ def weighted_gini(gini_left, gini_right):
     weight = np.arange(1, n) / n
     gini = gini_left * weight + gini_right * (1 - weight)
     return(gini)
+
+
+@njit(parallel=True)
+def _collapse_levels(X, y):
+    # Get unique levels of X
+    X_unique = np.unique(X)
+    y_agg = np.empty((X_unique.shape[0], y.shape[1]))
+    n = np.empty((X_unique.shape[0]))
+    for p in prange(0, X_unique.shape[0]):
+        x_target = X_unique[p]
+        y_agg[p, :] = row_mean(y[X == x_target])
+        n[p] = y[X == x_target].shape[0]
+
+    return X_unique, y_agg, row_cumsum(n)
