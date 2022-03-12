@@ -1,11 +1,9 @@
-from ._base import BaseProjection
-from ._identity import Identity
+from ._identity import identity
 from ._rotational import Rotational
 from ._sparserandom import SparseRandom
 
 __all__ = [
-    "BaseProjection",
-    "IdentityProjection",
+    "identity",
     "RotationalProjection",
     "SparseRandomProjection"
 ]
