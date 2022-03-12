@@ -1,7 +1,7 @@
 from numba import njit, prange
 import numpy as np
-from ..utils import row_cumsum, row_norm, sort_pair
-from ._gini import gini_impunity, weighted_gini
+from ..utils import row_cumsum, collapse_levels
+from ._gini import gini_impurity
 
 @njit
 def best_split(X, y):
@@ -18,11 +18,11 @@ def find_split(X, y):
     # split value and 2nd is gini
     col_split_gini = np.empty(shape = (X.shape[1], 2))
     for i in prange(0, X.shape[1]):
-        col_split_gini[i, :] = find_split_feat(X[:, i], y)
+        col_split_gini[i, :] = _find_split_feat(X[:, i], y)
     return col_split_gini
 
 @njit
-def find_split_feat(X, y):
+def _find_split_feat(X, y):
     '''Determines where a split should be placed along a 1-d continuous feature col wrt y
     
     Args:
@@ -32,28 +32,43 @@ def find_split_feat(X, y):
     Returns:
         A tuple of the split value for X and it's associated gini impunity
     '''
-    # Step 1: Sort both vectors by X ascending
-    X_sorted, y_sorted = sort_pair(X, y)
+    # Step 1: Get unique levels of X, counts and sums of y ordered by X
+    # This solves problems later where we need the pair of X, y sorted
+    # along X but also want to force the algorithm splits to consider
+    # a split has to include all rows that match the level, not just
+    # the one that mins gini
+    X_, y_, n_ = collapse_levels(X, y)
+
+    # Bail if X_ has only one level
+    if X_.shape[0] == 1:
+        return np.NaN, 999
     
     # Step 2: Compute the prediction for y if we made the split at the given row
-    y_pred_left = row_norm(row_cumsum(y_sorted[:-1, :]))
-    
-    # For right, flip the array to get reversed cumsums then flip it back to align to the original indicies
-    y_pred_right = row_norm(row_cumsum(y_sorted[1:, :][::-1])[::-1])
+    # Note we will remove the last level from these arrays as we can't split
+    # inclusively on this and have obs in the right partition
+    n_total = y.shape[0]
+    y_total = y_.sum(axis=0)
+    y_asc_cumsum = row_cumsum(y_)[:-1]
+    y_desc_cumsum = y_total - y_asc_cumsum
+    n_asc_cumsum = n_.cumsum()[:-1]
+    n_desc_cumsum = n_total - n_asc_cumsum
 
-    # Step 3: Calculate the gini impunity for each sub-partition
-    gini_left = gini_impunity(y_pred_left)
-    gini_right = gini_impunity(y_pred_right)
-    
-    # Step 4: Compute the weighted gini impunity for split of the parent node
-    gini = weighted_gini(gini_left, gini_right)
-    
-    # Step 5: Return the value of X which had the largest decrease in gini impunity, along
-    # with the actual impunity value to compare againt other features
-    return _propose_split(X_sorted, gini)
+    y_pred_left = (y_asc_cumsum / n_asc_cumsum.reshape((-1, 1)))
+    y_pred_right = (y_desc_cumsum / n_desc_cumsum.reshape((-1, 1)))
+
+    # Step 3: Compute gini impunity for left and right
+    gini_left = gini_impurity(y_pred_left)
+    gini_right = gini_impurity(y_pred_right)
+
+    # Step 4: Compute weighted impunity
+    weights_left = (n_asc_cumsum / n_total)
+    weights_right = 1 - weights_left
+    gini_split = gini_left * weights_left + gini_right * weights_right
+
+    return _best_split_feat(X_[:-1], gini_split)
 
 @njit
-def _propose_split(X, gini):
+def _best_split_feat(X, gini):
     '''Proposes a split based on a sorted vector X and vector of weighted gini impunities
     
     Args:
@@ -66,4 +81,5 @@ def _propose_split(X, gini):
     idx_split = np.argmin(gini)
     x_split = X[idx_split]
     gini_split = gini[idx_split]
+
     return (x_split, gini_split)

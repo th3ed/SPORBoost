@@ -1,10 +1,8 @@
-from ._gini import gini_impunity, weighted_gini
-from ._split import best_split, find_split, find_split_feat
+from ._gini import gini_impurity
+from ._split import best_split, find_split
 
 __all__ = [
     "best_split",
     "find_split",
-    "find_split_feat",
-    "gini_impunity",
-    "weighted_gini"
+    "gini_impurity",
 ]

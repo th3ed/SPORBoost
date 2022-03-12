@@ -56,3 +56,16 @@ def sort_pair(X, y):
     idx_sorted = np.argsort(X)
     X_sorted, y_sorted = X[idx_sorted], y[idx_sorted]
     return(X_sorted, y_sorted)
+
+@njit
+def collapse_levels(X, y):
+    # Get unique levels of X, and init outputs
+    X_ = np.unique(X)
+    y_ = np.empty(shape=(X_.shape[0], y.shape[1]), dtype='float')
+    n_ = np.empty(shape=(X_.shape[0]), dtype='int')
+
+    for idx_x in prange(0, X_.shape[0]):
+        match = (X == X_[idx_x])
+        y_[idx_x, :] = y[match, :].sum(axis=0)
+        n_[idx_x] = match.sum()
+    return X_, y_, n_
