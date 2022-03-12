@@ -1,15 +1,22 @@
-from ..common import gini_impurity, best_split
-from ..utils import row_mean
-from ..projections import identity
 import numpy as np
-from sporgboost.projections import identity
-from sporgboost.common import best_split, gini_impurity
-from sporgboost.utils import row_mean
+from ..projections import identity
+from ..common import best_split, gini_impurity
+from ..utils import row_mean
 from numba import njit
-from numba.types import boolean, uint32, float64, deferred_type, optional
+from numba.types import uint32, float64, deferred_type, optional
 from numba.experimental import jitclass
 
+node_type = deferred_type()
+
+@jitclass([
+    ('tree', optional(node_type)),
+    ('n_classes', optional(uint32))
+])
 class DecisionTree():
+    def __init__(self):
+        self.tree = None
+        self.n_classes = None
+        
     def fit(self, X, y, proj = identity):
         self.tree = _grow_tree(X, y, proj)
         self.n_classes = y.shape[1]
@@ -17,10 +24,7 @@ class DecisionTree():
     def predict(self, X):
         return _predict(self.tree, X)
 
-node_type = deferred_type()
-
 @jitclass([
-    ('is_leaf', boolean),
     ('value', optional(float64[:,:])),
     ('left', optional(node_type)),
     ('right', optional(node_type)),
@@ -29,24 +33,30 @@ node_type = deferred_type()
     ('n_classes', uint32)
 ])
 class Node():
-    def __init__(self, value = None, left = None, right = None, proj = None, split = None, n_classes = None):       
-        self.is_leaf = True if value is not None else False
-        self.value = value
-        self.left = left
-        self.right = right
-        self.proj = proj
-        self.split = split
+    def __init__(self, n_classes):
         self.n_classes = n_classes
+        self.value = None
+        self.left = None
+        self.right = None
+        self.proj = None
+        self.split = None
+
+    def is_leaf(self):
+        return self.value is not None
+        
 
 node_type.define(Node.class_type.instance_type)
 
+@njit
 def _grow_tree(X, y, proj_func):
     A = proj_func(X, y)
     X_ = X @ A
 
     col, split = best_split(X_, y)
     A_ = np.ascontiguousarray(A[:, col]).reshape((-1, 1))
-    out = Node(proj = A_, split = split, n_classes = y.shape[1])
+    out = Node(y.shape[1])
+    out.proj = A_
+    out.split = split
     le = (X_[:, col] <= split)
 
     # Compute new split predictions
@@ -55,14 +65,18 @@ def _grow_tree(X, y, proj_func):
 
     if gini_impurity(pred_left) == 0:
         # Return leaf value
-        out.left = Node(value = pred_left, n_classes = out.n_classes)
+        left = Node(out.n_classes)
+        left.value = pred_left
+        out.left = left
     else:
         # Grow another decision stump
         out.left = _grow_tree(X[le, :], y[le, :], proj_func)
 
-    if gini_impurity(pred_right) <= .01:
+    if gini_impurity(pred_right) == 0:
         # Return leaf value
-        out.right = Node(value = pred_right, n_classes = out.n_classes)
+        right = Node(out.n_classes)
+        right.value = pred_right
+        out.right = right
     else:
         out.right = _grow_tree(X[~le, :], y[~le, :], proj_func)
     
@@ -71,7 +85,7 @@ def _grow_tree(X, y, proj_func):
 @njit
 def _predict(tree, X):
     # If we are at a leaf, return the value
-    if tree.is_leaf:
+    if tree.is_leaf():
         return tree.value
 
     # Decision Stump, keep parsing
