@@ -1,1 +1,1 @@
-from ._decisiontree import DecisionTree
+from ._axisaligned import AxisAlignedDecisionTree
