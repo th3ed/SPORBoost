@@ -52,3 +52,5 @@ def test_collapse_levels(data_iris):
     assert np.all(df_reduced['x'] == X_collapsed)
     assert np.all(df_reduced.drop(['x'], axis=1) == y_collapsed)
 
+# Re-enable JIT
+os.environ['NUMBA_DISABLE_JIT'] = ''
