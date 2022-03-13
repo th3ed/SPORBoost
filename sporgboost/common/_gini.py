@@ -1,6 +1,5 @@
 from numba import njit
 import numpy as np
-from ..utils import row_cumsum
 
 @njit
 def gini_impurity(y):
