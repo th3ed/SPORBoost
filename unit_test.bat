@@ -1,0 +1,1 @@
+pytest --cov=sporgboost tests/ --cov-report html

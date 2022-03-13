@@ -1,3 +1,7 @@
+# Disable numba jit so we can test coverage
+import os
+os.environ['NUMBA_DISABLE_JIT'] = '1'
+
 import pytest
 import numpy as np
 import pandas as pd
