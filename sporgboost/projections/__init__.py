@@ -1,7 +1,1 @@
-from ._rotational import Rotational
-from ._sparserandom import SparseRandom
-
-__all__ = [
-    "RotationalProjection",
-    "SparseRandomProjection"
-]
+from ._sparserandom import sparse_random

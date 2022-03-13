@@ -29,17 +29,6 @@ def test_row_norm(data_iris):
 
     assert np.all((y_ / y_.sum(axis=1)[:, np.newaxis]) == row_norm(y_))
 
-# def test_sort_pair(data_iris):
-#     X, y = data_iris
-#     X_ = X[:,0]
-#     df = pd.DataFrame({'x' : X_, 'y' : y}).sort_values(by='x', ignore_index = True)
-    
-#     X_sorted, y_sorted = sort_pair(X_, y)
-#     # df['y2'] = y_sorted
-#     # print(df[['y', 'y2']][df.y != df.y2])
-#     assert np.all(df['x'].values == X_sorted)
-#     assert np.all(df['y'].values == y_sorted)
-
 def test_collapse_levels(data_iris):
     X, y = data_iris
     X_ = X[:,0]

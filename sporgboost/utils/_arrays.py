@@ -42,21 +42,6 @@ def row_norm(y):
     '''
     return(y / y.sum(axis=1).reshape((-1, 1)))
 
-# @njit
-# def sort_pair(X, y):
-#     '''Sort two 1-d vectors X and y according to X
-    
-#     Args:
-#         X (Array): 1-d array of X values to sort X and y on
-#         y (Array): 1-d array of y values to be sorted based on X
-        
-#     Returns:
-#         X, y pair of sorted values
-#     '''
-#     idx_sorted = np.argsort(X)
-#     X_sorted, y_sorted = X[idx_sorted], y[idx_sorted]
-#     return(X_sorted, y_sorted)
-
 @njit
 def collapse_levels(X, y):
     # Get unique levels of X, and init outputs

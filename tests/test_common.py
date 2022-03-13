@@ -12,7 +12,7 @@ import numpy as np
 def data_iris():
     return sklearn.datasets.load_iris(return_X_y = True)
 
-def test_shuffle(data_iris):
+def test_gini(data_iris):
     X, y = data_iris
 
     y_ = onehot_encode(y)
