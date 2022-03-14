@@ -44,22 +44,22 @@ def row_norm(y):
 
 @njit(parallel = False, cache=True)
 def col_all(y):
-    out = np.empty((y.shape[1]), dtype='bool')
-    for idx_y in prange(0, y.shape[1]):
+    out = np.empty((y.shape[0]), dtype='bool')
+    for idx_y in prange(0, y.shape[0]):
         out[idx_y] = np.all(y[idx_y, :])
     return out
 
 @njit(parallel = False, cache=True)
 def row_all(y):
-    out = np.empty((y.shape[0]), dtype='bool')
-    for idx_y in prange(0, y.shape[0]):
+    out = np.empty((y.shape[1]), dtype='bool')
+    for idx_y in prange(0, y.shape[1]):
         out[idx_y] = np.all(y[:, idx_y])
     return out
 
 @njit(parallel = False, cache=True)
 def col_any(y):
-    out = np.empty((y.shape[1]), dtype='bool')
-    for idx_y in prange(0, y.shape[1]):
+    out = np.empty((y.shape[0]), dtype='bool')
+    for idx_y in prange(0, y.shape[0]):
         out[idx_y] = np.any(y[idx_y, :])
     return out
 
@@ -72,8 +72,8 @@ def row_any(y):
 
 @njit(parallel = False, cache=True)
 def col_nunique(y):
-    out = np.empty((y.shape[1]), dtype='int')
-    for idx_y in prange(0, y.shape[1]):
+    out = np.empty((y.shape[0]), dtype='int')
+    for idx_y in prange(0, y.shape[0]):
         out[idx_y] = np.unique(y[idx_y, :]).shape[0]
     return out
 
