@@ -2,14 +2,6 @@ from ..projections import identity
 from ._predict import _predict
 from ._growtree import _grow_tree
 
-# ////////////////////////////////////////////////////////////////
-# ////////////////////////////////////////////////////////////////
-# ////////////////////////////////////////////////////////////////
-
-# @jitclass([
-#     ('tree', optional(node_type)),
-#     ('n_classes', optional(uint32))
-# ])
 class AxisAlignedDecisionTree():
     def __init__(self):
         self.tree = None

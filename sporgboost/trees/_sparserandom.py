@@ -1,16 +1,7 @@
-from this import d
 from ..projections import sparse_random
 from ._predict import _predict
 from ._growtree import _grow_tree
 
-# ////////////////////////////////////////////////////////////////
-# ////////////////////////////////////////////////////////////////
-# ////////////////////////////////////////////////////////////////
-
-# @jitclass([
-#     ('tree', optional(node_type)),
-#     ('n_classes', optional(uint32))
-# ])
 class SparseRandomDecisionTree():
     def __init__(self, d, s = 3):
         self.tree = None
