@@ -1,7 +1,7 @@
 from numba import njit
 import numpy as np
 
-@njit
+@njit(cache=True)
 def sparse_random(X, d, s):
     p = X.shape[1]
     # Step 1: Make random draws from uniform distribution

@@ -1,7 +1,7 @@
 from numba import njit
 import numpy as np
 
-@njit
+@njit(cache=True)
 def gini_impurity(y):
     ''' Computes gini impunity for a given partition of data
     

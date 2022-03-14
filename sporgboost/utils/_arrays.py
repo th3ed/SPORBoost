@@ -1,7 +1,7 @@
 from numba import njit, prange
 import numpy as np
 
-@njit(parallel = True)
+@njit(parallel = True, cache=True)
 def row_cumsum(X):
     '''Numba optimized implementation of row-cumsum
     This function is needed to allow broader functions such as find_split compile with numba. Numba
@@ -19,7 +19,7 @@ def row_cumsum(X):
         out[:, idx_col] = X[:, idx_col].cumsum()
     return out
 
-@njit
+@njit(cache=True)
 def row_mean(X):
     '''Numba optimized implementation of row-mean
     Args:
@@ -30,7 +30,7 @@ def row_mean(X):
     '''
     return X.sum(axis=0) / X.shape[0]
 
-@njit
+@njit(cache=True)
 def row_norm(y):
     '''Normalizes a vector such that the row sum == 1
     
@@ -42,7 +42,7 @@ def row_norm(y):
     '''
     return(y / y.sum(axis=1).reshape((-1, 1)))
 
-@njit
+@njit(cache=True)
 def collapse_levels(X, y):
     # Get unique levels of X, and init outputs
     X_ = np.unique(X)
