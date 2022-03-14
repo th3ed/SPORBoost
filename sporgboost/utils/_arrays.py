@@ -1,7 +1,7 @@
 from numba import njit, prange
 import numpy as np
 
-@njit(parallel = True, cache=True)
+@njit(parallel = False, cache=True)
 def row_cumsum(X):
     '''Numba optimized implementation of row-cumsum
     This function is needed to allow broader functions such as find_split compile with numba. Numba
@@ -41,6 +41,48 @@ def row_norm(y):
         y vector normalized
     '''
     return(y / y.sum(axis=1).reshape((-1, 1)))
+
+@njit(parallel = False, cache=True)
+def col_all(y):
+    out = np.empty((y.shape[1]), dtype='bool')
+    for idx_y in prange(0, y.shape[1]):
+        out[idx_y] = np.all(y[idx_y, :])
+    return out
+
+@njit(parallel = False, cache=True)
+def row_all(y):
+    out = np.empty((y.shape[0]), dtype='bool')
+    for idx_y in prange(0, y.shape[0]):
+        out[idx_y] = np.all(y[:, idx_y])
+    return out
+
+@njit(parallel = False, cache=True)
+def col_any(y):
+    out = np.empty((y.shape[1]), dtype='bool')
+    for idx_y in prange(0, y.shape[1]):
+        out[idx_y] = np.any(y[idx_y, :])
+    return out
+
+@njit(parallel = False, cache=True)
+def row_any(y):
+    out = np.empty((y.shape[1]), dtype='bool')
+    for idx_y in prange(0, y.shape[1]):
+        out[idx_y] = np.any(y[:, idx_y])
+    return out
+
+@njit(parallel = False, cache=True)
+def col_nunique(y):
+    out = np.empty((y.shape[1]), dtype='int')
+    for idx_y in prange(0, y.shape[1]):
+        out[idx_y] = np.unique(y[idx_y, :]).shape[0]
+    return out
+
+@njit(parallel = False, cache=True)
+def row_nunique(y):
+    out = np.empty((y.shape[1]), dtype='int')
+    for idx_y in prange(0, y.shape[1]):
+        out[idx_y] = np.unique(y[:, idx_y]).shape[0]
+    return out
 
 @njit(cache=True)
 def collapse_levels(X, y):

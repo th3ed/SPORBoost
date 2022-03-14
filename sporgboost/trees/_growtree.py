@@ -1,8 +1,9 @@
 from numba import prange, deferred_type, optional, float64
 from numba.experimental import jitclass
 from sporgboost.common import best_split, gini_impurity
-from sporgboost.utils import row_mean
+from sporgboost.utils import row_mean, row_nunique
 import numpy as np
+from numba import njit
 
 node_type = deferred_type()
 
@@ -32,7 +33,7 @@ class Node():
         
 node_type.define(Node.class_type.instance_type)
 
-def _grow_tree(X, y, proj, max_depth = 8, **kwargs):
+def _grow_tree(X, y, proj, max_depth = None, **kwargs):
     # Initialize root of tree
     root = Node()
 
@@ -44,6 +45,7 @@ def _grow_tree(X, y, proj, max_depth = 8, **kwargs):
     depth = 0
     start = 0
     end = 1
+    max_depth = np.inf if max_depth is None else max_depth
     while (depth < max_depth) and ((end - start) > 0):
         # Parallel loop over all nodes to be processed
         nodes_added_in_round = 0
@@ -54,23 +56,38 @@ def _grow_tree(X, y, proj, max_depth = 8, **kwargs):
 
             # Step 1: Check if node is a leaf
             node.value = row_mean(y_).reshape((1, -1))
+
+            # Leaf check 1: partition is pure
             if gini_impurity(node.value) == 0.:
                 continue
 
             # Step 2: If node is not a leaf, find a split
             # Project data based on function
             A = proj(X_, **kwargs)
+
             X_proj = X_ @ A
+
+            # Leaf check 2: partition has no unique levels in X, can't
+            # be partitioned further to improve performance
+            if np.all(row_nunique(X_proj) <= 1):
+                continue
 
             # Evaluate each col and candidate split
             col, node.split = best_split(X_proj, y_)
-            node.proj = A[col, :].reshape((-1, 1))
+            node.proj = A[:, col].reshape((-1, 1))
 
             # Initalize children and add to the next iteration to be processed
             node.init_children()
 
             # Get idx arrays for the split
-            le = X_proj[:, col] <= node.split
+            le = (X_proj[:, col] <= node.split)
+            if (le.sum() == X.shape[0]) or (le.sum() == 0):
+                raise ValueError(f"empty partition {le.sum()} of {X_proj.shape[0]}\n"
+                f"col={col} split={node.split}\n"
+                f"X_lower={X_proj.min(axis=0)}, X_upper={X_proj.max(axis=0)}\n"
+                f"X_proj={X_proj}\ny={y_}"
+                f"A={A}"
+                )
 
             nodes.append((node.left, idx[le]))
             nodes.append((node.right, idx[~le]))

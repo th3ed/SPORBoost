@@ -1,7 +1,7 @@
 from numba import njit
 import numpy as np
 
-@njit(cache=True)
+# @njit(cache=True)
 def _predict(tree, X, n_classes):
     # If we are at a leaf, return the value
     if tree.is_leaf():
