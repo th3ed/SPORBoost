@@ -3,7 +3,7 @@ import numpy as np
 from ..utils import row_cumsum, collapse_levels
 from ._gini import gini_impurity
 
-@njit
+@njit(cache=True)
 def best_split(X, y):
     col_split_gini = find_split(X, y)
     
@@ -11,7 +11,7 @@ def best_split(X, y):
     col_idx = np.argmin(col_split_gini[:,1])
     return (col_idx, col_split_gini[col_idx, 0])
 
-@njit(parallel=True)
+@njit(parallel=True, cache=True)
 def find_split(X, y):
     # Evaluate best split among each feature
     # 2d array where rows correspond to each col, 1st col is
@@ -21,7 +21,7 @@ def find_split(X, y):
         col_split_gini[i, :] = _find_split_feat(X[:, i], y)
     return col_split_gini
 
-@njit
+@njit(cache=True)
 def _find_split_feat(X, y):
     '''Determines where a split should be placed along a 1-d continuous feature col wrt y
     
@@ -67,7 +67,7 @@ def _find_split_feat(X, y):
 
     return _best_split_feat(X_[:-1], gini_split)
 
-@njit
+@njit(cache=True)
 def _best_split_feat(X, gini):
     '''Proposes a split based on a sorted vector X and vector of weighted gini impunities
     
