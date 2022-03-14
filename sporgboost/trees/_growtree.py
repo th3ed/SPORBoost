@@ -1,4 +1,4 @@
-from numba import njit, prange, deferred_type, optional, float64
+from numba import prange, deferred_type, optional, float64
 from numba.experimental import jitclass
 from sporgboost.common import best_split, gini_impurity
 from sporgboost.utils import row_mean
@@ -32,8 +32,7 @@ class Node():
         
 node_type.define(Node.class_type.instance_type)
 
-@njit(parallel = True)
-def _grow_tree(X, y, proj, max_depth = 8):
+def _grow_tree(X, y, proj, max_depth = 8, **kwargs):
     # Initialize root of tree
     root = Node()
 
@@ -60,7 +59,7 @@ def _grow_tree(X, y, proj, max_depth = 8):
 
             # Step 2: If node is not a leaf, find a split
             # Project data based on function
-            A = proj(X_)
+            A = proj(X_, **kwargs)
             X_proj = X_ @ A
 
             # Evaluate each col and candidate split
