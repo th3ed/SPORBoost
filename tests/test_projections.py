@@ -4,7 +4,11 @@ os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 from numba import prange
 import numpy as np
-from sporgboost.projections import sparse_random
+from sporgboost.projections import sparse_random, identity
+
+def test_identity():
+    X = np.empty(shape=(1, 100))
+    assert np.all(np.eye(X.shape[1]) == identity(X))
 
 def test_sparse_random():
     np.random.seed(1234)
