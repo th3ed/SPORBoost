@@ -4,7 +4,7 @@ import numpy as np
 from ..utils import row_cumsum, collapse_levels
 from ._gini import gini_impurity
 
-# @njit(cache=True)
+@njit(cache=True)
 def best_split(X, y):
     col_split_gini = find_split(X, y)
     
@@ -12,7 +12,7 @@ def best_split(X, y):
     col_idx = np.argmin(col_split_gini[:,1])
     return (col_idx, col_split_gini[col_idx, 0])
 
-# @njit(parallel=False, cache=True)
+@njit(parallel=False, cache=True)
 def find_split(X, y):
     # Evaluate best split among each feature
     # 2d array where rows correspond to each col, 1st col is
@@ -25,7 +25,7 @@ def find_split(X, y):
         col_split_gini[i, :] = _find_split_feat(X[:, i], y)
     return col_split_gini
 
-# @njit(cache=True)
+@njit(cache=True)
 def _find_split_feat(X, y):
     '''Determines where a split should be placed along a 1-d continuous feature col wrt y
     
@@ -71,7 +71,7 @@ def _find_split_feat(X, y):
 
     return _best_split_feat(X_[:-1], gini_split)
 
-# @njit(cache=True)
+@njit(cache=True)
 def _best_split_feat(X, gini):
     '''Proposes a split based on a sorted vector X and vector of weighted gini impunities
     
@@ -82,12 +82,9 @@ def _best_split_feat(X, gini):
     Returns:
         A tuple of the split value for X and it's associated gini impunity
     '''
-    try:
-        idx_split = np.argmin(gini)
-    except ValueError as e:
-        print(gini)
-        raise e
-    x_split = X[idx_split]
+    idx_split = np.argmin(gini)
+    # Taking mean of split values to align with sklearn
+    x_split = X[idx_split:idx_split+2].mean()
     gini_split = gini[idx_split]
 
     return (x_split, gini_split)

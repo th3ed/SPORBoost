@@ -5,17 +5,17 @@ from sporgboost.utils import row_mean, row_nunique
 import numpy as np
 from numba import njit
 
-node_type = deferred_type()
+# node_type = deferred_type()
 
 # Node needs to be explicitly included in each tree type for numba
 # to properly compile
-@jitclass([
-    ('value', optional(float64[:,:])),
-    ('left', optional(node_type)),
-    ('right', optional(node_type)),
-    ('proj', optional(float64[:,:])),
-    ('split', optional(float64))
-])
+# @jitclass([
+#     ('value', optional(float64[:,:])),
+#     ('left', optional(node_type)),
+#     ('right', optional(node_type)),
+#     ('proj', optional(float64[:,:])),
+#     ('split', optional(float64))
+# ])
 class Node():
     def __init__(self):
         self.value = None
@@ -31,7 +31,7 @@ class Node():
         self.left = Node()
         self.right = Node()
         
-node_type.define(Node.class_type.instance_type)
+# node_type.define(Node.class_type.instance_type)
 
 def _grow_tree(X, y, proj, max_depth = None, **kwargs):
     # Initialize root of tree
