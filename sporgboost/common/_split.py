@@ -17,9 +17,6 @@ def find_split(X, y):
     # Evaluate best split among each feature
     # 2d array where rows correspond to each col, 1st col is
     # split value and 2nd is gini
-    if X.shape[0] <= 1:
-        raise ValueError("X is <= 1 row and can't be split further")
-
     col_split_gini = np.empty(shape = (X.shape[1], 2))
     for i in prange(0, X.shape[1]):
         col_split_gini[i, :] = _find_split_feat(X[:, i], y)

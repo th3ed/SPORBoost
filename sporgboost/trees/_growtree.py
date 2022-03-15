@@ -81,14 +81,6 @@ def _grow_tree(X, y, proj, max_depth = None, **kwargs):
 
             # Get idx arrays for the split
             le = (X_proj[:, col] <= node.split)
-            if (le.sum() == X.shape[0]) or (le.sum() == 0):
-                raise ValueError(f"empty partition {le.sum()} of {X_proj.shape[0]}\n"
-                f"col={col} split={node.split}\n"
-                f"X_lower={X_proj.min(axis=0)}, X_upper={X_proj.max(axis=0)}\n"
-                f"X_proj={X_proj}\ny={y_}"
-                f"A={A}"
-                )
-
             nodes.append((node.left, idx[le]))
             nodes.append((node.right, idx[~le]))
             nodes_added_in_round += 2
