@@ -14,6 +14,8 @@ def data_iris():
     return sklearn.datasets.load_iris(return_X_y = True)
 
 def test_axisaligned(data_iris):
+    np.random.seed(4321)
+
     X, y = data_iris
 
     y_ = onehot_encode(y)

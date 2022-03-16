@@ -4,7 +4,7 @@ os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 from numba import prange
 import numpy as np
-from sporgboost.projections import sparse_random, identity, pca
+from sporgboost.projections import sparse_random, identity, pca, rotation
 import pytest
 import sklearn.datasets
 from sklearn.decomposition import PCA
@@ -72,6 +72,19 @@ def test_pca_centered(data_iris):
     uncentered_pca = X @ V
 
     assert np.all(np.var(centered_pca - uncentered_pca, axis=0) < 1e-16)
+
+def test_rotation(data_iris):
+    # Make a random projection, and then compare result for the subset of
+    # features used
+    X, _ = data_iris
+
+    V = rotation(X, K=3)
+    selected = (V[:,0] != 0)
+    V_subset = V[selected,:2]
+    V_indep = pca(X[:,selected])
+
+    assert np.all((V_subset - V_indep) < 1e16)
+
 
 # Re-enable JIT
 os.environ['NUMBA_DISABLE_JIT'] = ''
