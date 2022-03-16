@@ -20,7 +20,7 @@ def test_axisaligned(data_iris):
 
     y_ = onehot_encode(y)
     X_, y_ = shuffle(X, y_)
-    X_train , y_train = X[:-50, :], y_[:-50, :]
+    X_train , y_train = X_[:-50, :], y_[:-50, :]
     X_test = X[-50:, :]
 
     model_aa = AxisAlignedDecisionTree()
