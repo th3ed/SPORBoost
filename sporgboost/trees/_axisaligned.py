@@ -1,6 +1,10 @@
-from ..projections import identity
-from ._predict import _predict
-from ._growtree import _grow_tree
+from numba import njit
+import numpy as np
+from ..common import _predict_tree, _grow_tree
+
+@njit(cache=True)
+def identity(X):
+    return np.eye(X.shape[1])
 
 class AxisAlignedDecisionTree():
     def __init__(self):
@@ -12,4 +16,4 @@ class AxisAlignedDecisionTree():
         self.n_classes = y.shape[1]
 
     def predict(self, X):
-        return _predict(self.tree, X, self.n_classes)
+        return _predict_tree(self.tree, X, self.n_classes)

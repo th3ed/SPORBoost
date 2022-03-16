@@ -4,7 +4,7 @@ os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 from numba import prange
 import numpy as np
-from sporgboost.projections import sparse_random, identity, pca, rotation
+from sporgboost.trees import sparse_random, identity, pca, rotation
 import pytest
 import sklearn.datasets
 from sklearn.decomposition import PCA
