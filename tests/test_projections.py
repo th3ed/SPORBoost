@@ -4,7 +4,14 @@ os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 from numba import prange
 import numpy as np
-from sporgboost.projections import sparse_random, identity
+from sporgboost.projections import sparse_random, identity, pca
+import pytest
+import sklearn.datasets
+from sklearn.decomposition import PCA
+
+@pytest.fixture
+def data_iris():
+    return sklearn.datasets.load_iris(return_X_y = True)
 
 def test_identity():
     X = np.empty(shape=(1, 100))
@@ -40,7 +47,31 @@ def test_sparse_random():
     assert np.all(s_ > s - tol)
     assert np.all(s_ < s + tol)
     
-test_sparse_random()
+def test_pca_tieout(data_iris):
+    X, _ = data_iris
+    V = pca(X)
+
+    model_sklearn = PCA(svd_solver='full')
+    model_sklearn.fit(X)
+
+    X_pca = (X - X.mean(axis=0)) @ V
+
+    # Weights can be flipped based on the SVD engine, flip
+    # signs and check
+    X_pca_sklearn =  model_sklearn.transform(X)
+    return np.all(np.abs(X_pca - X_pca_sklearn) < 1e-8)
+
+def test_pca_centered(data_iris):
+    # This test confirms that PCA series transformed
+    # on original or de-meaned data only differ by a constant
+    # which can be baked into the node split
+    X, _ = data_iris
+
+    V = pca(X)
+    centered_pca = (X - X.mean(axis=0)) @ V
+    uncentered_pca = X @ V
+
+    assert np.all(np.var(centered_pca - uncentered_pca, axis=0) < 1e-16)
 
 # Re-enable JIT
 os.environ['NUMBA_DISABLE_JIT'] = ''
