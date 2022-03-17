@@ -1,16 +1,17 @@
 from ..trees import AxisAlignedDecisionTree
+from ..preprocessing import onehot_encode
 from sklearn.base import BaseEstimator
 from numba import prange
 import numpy as np
 
 class BaseForest(BaseEstimator):
     def __init__(self,
-                 n_trees = 10,
+                 n_trees = 500,
                  seed = 1234
                  ):
         self.base_classifer = AxisAlignedDecisionTree
         self.n_trees = n_trees
-        self._forest = np.empty((self.n_trees))
+        self._forest = np.empty((self.n_trees), dtype='object')
         self.seed = seed
 
         # Initialize the classifiers
@@ -19,12 +20,13 @@ class BaseForest(BaseEstimator):
 
     def fit(self, X, y):
         self.n_classes = y.shape[1]
+        np.random.seed(self.seed)
 
     def predict_proba(self, X):
         # Scoring can be done in parallel in all cases
-        out = np.zeros(shape=(X.shape[0], self.n_classes))
+        out = np.zeros(shape=(X.shape[0], self.n_classes), dtype='float')
         for idx_tree in prange(self.n_trees):
-            out += self._forest.predict(X)
+            out += self._forest[idx_tree].predict(X)
 
         # Average prediction from all trees
         out /= self.n_trees
@@ -33,9 +35,8 @@ class BaseForest(BaseEstimator):
 
     def predict(self, X):
         out = np.zeros(shape=(X.shape[0], self.n_classes))
-        probs = self.predict(X)
-        out[np.argmax(probs, axis=1)] = 1
-        return out
+        probs = self.predict_proba(X)
+        return onehot_encode(np.argmax(probs, axis=1))
 
 class BaseRandomForest(BaseForest):
     def fit(self, X, y):
@@ -43,8 +44,6 @@ class BaseRandomForest(BaseForest):
         super().fit(X,y)
 
         # Random Forest trees can be fit in parallel
-        np.random.seed(self.seed)
-
         for idx_tree in prange(self.n_trees):
             # Draw a bootstrapped sample
             idx_rows = np.random.choice(np.arange(X.shape[0]), size=(X.shape[0]), replace=True)
@@ -52,19 +51,28 @@ class BaseRandomForest(BaseForest):
 
 class BaseAdaBoost(BaseForest):
     def fit(self, X, y):
-        # Boosted trees must be fit sequentially
-        np.random.seed(self.seed)
+        # Store metadata from training
+        super().fit(X,y)
 
+        # Boosted trees must be fit sequentially
         # Give all samples equal weight initially
         D = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
 
-        for idx_tree in range(self.n_trees):
+        final_n_trees = self.n_trees
+        self.n_trees = 0
+        for idx_tree in range(final_n_trees):
             # Draw a sample and fit a tree
             idx_rows = np.random.choice(np.arange(X.shape[0]), size=(X.shape[0]), replace=True, p=D)
             self._forest[idx_tree].fit(X[idx_rows, :], y[idx_rows,:])
 
             # Update weights based on forest errors
+            self.n_trees += 1
             y_pred = self.predict(X)
+
+            # Terminate early if all predictions match actuals
+            if np.all(y_pred == y):
+                break
+
             D = BaseAdaBoost._weight_update(y, y_pred, D)
             
 
@@ -91,6 +99,7 @@ class BaseAdaBoost(BaseForest):
 
         # Compute non-normalized weight updates
         D_new = D * np.exp(scalar)
+
         D_new /= D_new.sum()
 
         return D_new
