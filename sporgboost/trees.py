@@ -1,4 +1,3 @@
-import numpy as np
 from .common import _predict_tree, _grow_tree
 from .projections import identity, sparse_random, rotation
 from sklearn.base import BaseEstimator

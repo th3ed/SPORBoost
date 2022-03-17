@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 import pandas as pd
 import sklearn.datasets
-from sporgboost.utils import *
+from sporgboost._arrays import *
 from sporgboost.preprocessing import onehot_encode
 
 @pytest.fixture

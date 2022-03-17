@@ -1,5 +1,5 @@
 import numpy as np
-def onehot_encode(y):
+def onehot_encode(y, levels = 0):
     '''One-hot encoding of a 1d vector of indices into a 2d array of 0-1 values
     
     Args:
@@ -8,4 +8,5 @@ def onehot_encode(y):
     Returns:
         2-d array of indicator cols (1 indicating selected class)
     '''
-    return(np.eye(np.max(y) + 1)[y])
+    y_levels = levels if levels > 0 else np.max(y) + 1
+    return(np.eye(y_levels)[y])

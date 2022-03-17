@@ -2,7 +2,7 @@ from numba import njit
 import numpy as np
 import numpy as np
 from numba import njit
-from .utils import row_mean, col_all
+from ._arrays import row_mean, col_all
 
 @njit(cache=True)
 def identity(X):

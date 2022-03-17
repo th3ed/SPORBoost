@@ -1,5 +1,5 @@
-from ..trees import AxisAlignedDecisionTree
-from ..preprocessing import onehot_encode
+from .trees import AxisAlignedDecisionTree
+from .preprocessing import onehot_encode
 from sklearn.base import BaseEstimator
 from numba import prange
 import numpy as np
@@ -7,16 +7,17 @@ import numpy as np
 class BaseForest(BaseEstimator):
     def __init__(self,
                  n_trees = 500,
+                 max_depth = None,
                  seed = 1234
                  ):
-        self.base_classifer = AxisAlignedDecisionTree
         self.n_trees = n_trees
+        self.max_depth = max_depth
         self._forest = np.empty((self.n_trees), dtype='object')
         self.seed = seed
 
         # Initialize the classifiers
         for idx_tree in prange(self.n_trees):
-            self._forest[idx_tree] = self.base_classifer()
+            self._forest[idx_tree] = self.base_classifer(max_depth=self.max_depth)
 
     def fit(self, X, y):
         self.n_classes = y.shape[1]
@@ -36,7 +37,7 @@ class BaseForest(BaseEstimator):
     def predict(self, X):
         out = np.zeros(shape=(X.shape[0], self.n_classes))
         probs = self.predict_proba(X)
-        return onehot_encode(np.argmax(probs, axis=1))
+        return onehot_encode(np.argmax(probs, axis=1), levels=self.n_classes)
 
 class BaseRandomForest(BaseForest):
     def fit(self, X, y):
@@ -50,6 +51,13 @@ class BaseRandomForest(BaseForest):
             self._forest[idx_tree].fit(X[idx_rows, :], y[idx_rows,:])
 
 class BaseAdaBoost(BaseForest):
+    def __init__(self,
+                 n_trees = 500,
+                 max_depth = 1,
+                 seed = 1234
+                 ):
+        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed)
+
     def fit(self, X, y):
         # Store metadata from training
         super().fit(X,y)
@@ -74,6 +82,9 @@ class BaseAdaBoost(BaseForest):
                 break
 
             D = BaseAdaBoost._weight_update(y, y_pred, D)
+
+        # Remove any unused trees
+        self._forest = self._forest[:self.n_trees]
             
 
     @staticmethod

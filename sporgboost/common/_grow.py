@@ -1,7 +1,7 @@
 from numba import prange, deferred_type, optional, float64
 from numba.experimental import jitclass
 from sporgboost.common import best_split, gini_impurity
-from sporgboost.utils import row_mean, row_nunique
+from .._arrays import row_mean, row_nunique
 import numpy as np
 from numba import njit
 
@@ -46,8 +46,8 @@ def _grow_tree(X, y, proj, max_depth = None, **kwargs):
     start = 0
     end = 1
     max_depth = np.inf if max_depth is None else max_depth
-    
-    while (depth < max_depth) and ((end - start) > 0):
+
+    while (depth <= max_depth) and ((end - start) > 0):
         # Parallel loop over all nodes to be processed
         nodes_added_in_round = 0
         for node_idx in prange(start, end):
@@ -58,7 +58,11 @@ def _grow_tree(X, y, proj, max_depth = None, **kwargs):
             # Step 1: Check if node is a leaf
             node.value = row_mean(y_).reshape((1, -1))
 
-            # Leaf check 1: partition is pure
+            # Leaf check 1: at max depth
+            if depth == max_depth:
+                continue
+
+            # Leaf check 2: partition is pure
             if gini_impurity(node.value) == 0.:
                 continue
 
@@ -68,7 +72,7 @@ def _grow_tree(X, y, proj, max_depth = None, **kwargs):
 
             X_proj = X_ @ A
 
-            # Leaf check 2: partition has no unique levels in X, can't
+            # Leaf check 3: partition has no unique levels in X, can't
             # be partitioned further to improve performance
             if np.all(row_nunique(X_proj) <= 1):
                 continue

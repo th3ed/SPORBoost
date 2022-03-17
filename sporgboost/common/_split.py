@@ -1,7 +1,7 @@
 from multiprocessing.sharedctypes import Value
 from numba import njit, prange
 import numpy as np
-from ..utils import row_cumsum, collapse_levels
+from .._arrays import row_cumsum, collapse_levels
 from ._gini import gini_impurity
 
 @njit(cache=True)
