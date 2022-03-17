@@ -46,6 +46,7 @@ def _grow_tree(X, y, proj, max_depth = None, **kwargs):
     start = 0
     end = 1
     max_depth = np.inf if max_depth is None else max_depth
+    
     while (depth < max_depth) and ((end - start) > 0):
         # Parallel loop over all nodes to be processed
         nodes_added_in_round = 0
