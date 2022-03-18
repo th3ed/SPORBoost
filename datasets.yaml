@@ -1,3 +1,56 @@
+abalone:
+  url: "https://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data"
+  target: 'Rings'
+  missing_ind: '?'
+  sep: ","
+  drop: []
+  columns:
+    Sex: "category"
+    Length: "continuous"
+    Diameter: "continuous"
+    Height: "continuous"
+    Whole_Weight: "continuous"
+    Shucked_Weight: "continuous"
+    Viscera_Weight: "continuous"
+    Shell_Weight: "continuous"
+    Rings: "category"
+flags:
+  url: "https://archive.ics.uci.edu/ml/machine-learning-databases/flags/flag.data"
+  target: 'religion'
+  missing_ind: '?'
+  sep: ","
+  drop: ['name']
+  columns:
+    name: 'category'
+    landmass: 'category'
+    zone: 'category'
+    area: 'continuous'
+    population: 'continuous'
+    language: 'category'
+    religion: 'category'
+    bars: 'continuous'
+    stripes: 'continuous'
+    colors: 'continuous'
+    red: 'category'
+    green: 'category'
+    blue: 'category'
+    gold: 'category'
+    white: 'category'
+    black: 'category'
+    orange: 'category'
+    mainhue: 'category'
+    circles: 'continuous'
+    crosses: 'continuous'
+    saltires: 'continuous'
+    quarters: 'continuous'
+    sunstars: 'continuous'
+    crescent: 'category'
+    triangle: 'category'
+    icon: 'category'
+    animate: 'category'
+    text: 'category'
+    topleft: 'category'
+    botright: 'category'
 horse_colic:
   url: "https://archive.ics.uci.edu/ml/machine-learning-databases/horse-colic/horse-colic.data"
   target: 'Outcome'
@@ -45,6 +98,49 @@ iris:
     petal_length: 'continuous'
     petal_width: 'continuous'
     class: 'category'
+soybean:
+  url: "https://archive.ics.uci.edu/ml/machine-learning-databases/soybean/soybean-large.data"
+  missing_ind: "?"
+  target: 'class'
+  sep: ","
+  drop: []
+  columns:
+    class: 'category'
+    date: 'category'
+    plant_stand: 'category'
+    precip: 'category'
+    temp: 'category'
+    hail: 'category'
+    crop_hist: 'category'
+    area_damaged: 'category'
+    severity: 'category'
+    seed_tmt: 'category'
+    germination: 'category'
+    plant_growth: 'category'
+    leaves: 'category'
+    leafspots_halo: 'category'
+    leafspots_marg: 'category'
+    leafspot_size: 'category'
+    leaf_shread: 'category'
+    leaf_malf: 'category'
+    leaf_mild: 'category'
+    stem: 'category'
+    lodging: 'category'
+    stem_cankers: 'category'
+    canker_lesion: 'category'
+    fruiting_bodies: 'category'
+    external_decay: 'category'
+    mycelium: 'category'
+    int_discolor: 'category'
+    sclerotia: 'category'
+    fruit_pods: 'category'
+    fruit_spots: 'category'
+    seed: 'category'
+    mold_growth: 'category'
+    seed_discolor: 'category'
+    seed_size: 'category'
+    shriveling: 'category'
+    roots: 'category'
 statlog_shuttle:
   # Note that the shuttle training data is stored in zip format and needed to be downloaded
   # and extracted to be processes
@@ -65,3 +161,28 @@ statlog_shuttle:
     x8: 'continuous'
     x9: 'continuous'
     class: 'category'
+zoo:
+  url: "https://archive.ics.uci.edu/ml/machine-learning-databases/zoo/zoo.data"
+  missing_ind: "?"
+  target: 'type'
+  sep: ","
+  drop: ['animal_name']
+  columns:
+    animal_name: 'category'
+    hair: 'category'
+    feathers: 'category'
+    eggs: 'category'
+    milk: 'category'
+    airborne: 'category'
+    aquatic: 'category'
+    predator: 'category'
+    toothed: 'category'
+    backbone: 'category'
+    breathes: 'category'
+    venmous: 'category'
+    fins: 'category'
+    legs: 'continuous'
+    tail: 'category'
+    domestic: 'category'
+    catsize: 'category'
+    type: 'category'

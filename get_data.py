@@ -30,6 +30,10 @@ def save_all_datasets(yaml_path, out_path):
 
     @delayed
     def process_data(name, out_path, **kwargs):
+        # Don't process the data if it already exists
+        if os.path.exists(f"{out_path}/{name}.parquet"):
+            return None
+
         # Get the dataset
         df = get_dataset(**kwargs)
 
