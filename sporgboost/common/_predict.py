@@ -7,7 +7,9 @@ def _predict_tree(tree, X, n_classes):
 
     # If we are at a leaf, return the value
     if tree.is_leaf():
-        out[:,:] = tree.value
+        # Changed scoring value to use voting
+        out[:,:] = 0.
+        out[:, np.argmax(tree.value)] = 1.
     else:
         # Decision Stump, keep parsing
         # Project X, then compare against split value
