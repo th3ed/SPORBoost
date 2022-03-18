@@ -6,3 +6,4 @@ __pycache__/
 report/
 htmlcov/
 .coverage
+data/
