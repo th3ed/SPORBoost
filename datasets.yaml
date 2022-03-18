@@ -1,0 +1,32 @@
+horse-colic:
+  url: "https://archive.ics.uci.edu/ml/machine-learning-databases/horse-colic/horse-colic.data"
+  missing_ind: '?'
+  columns:
+    Surgery: "category"
+    Age: "ordinal"
+    Hospital_Number: "category"
+    Rectal_Temperature: "continuous"
+    Pulse: "continuous"
+    Respiratory_Rate: "continuous"
+    Temperature_Extremities: "ordinal"
+    Peripheral_Pulse: "category"
+    Mucous_Membranes: "category"
+    Capilary_Refill_Time: "ordinal"
+    Pain: "ordinal"
+    Peristalsis: "ordinal"
+    Abdominal_Distension: "ordinal"
+    Nasogastric_Tube: "ordinal"
+    Nasogastric_Reflux: "category"
+    Nasogastric_Reflux_PH: "continuous"
+    Rectal_Examination_Feces: "category"
+    Abdomen: "category"
+    Packed_Cell_Volume: 'continuous'
+    Total_Protein: 'continuous'
+    Abdominocentesis_Appearance: 'ordinal'
+    Abdomcentesis_Total_Protein: 'continuous'
+    Outcome: 'target'
+    Surgical_Lesion: 'ordinal'
+    Lesion1: 'category'
+    Lesion2: 'category'
+    Lesion3: 'category'
+    cp_data: 'category'

@@ -7,3 +7,5 @@ report/
 htmlcov/
 .coverage
 data/
+dask-worker-space/
+core.*
