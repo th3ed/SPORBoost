@@ -1,6 +1,9 @@
-horse-colic:
+horse_colic:
   url: "https://archive.ics.uci.edu/ml/machine-learning-databases/horse-colic/horse-colic.data"
+  target: 'Outcome'
   missing_ind: '?'
+  sep: " "
+  drop: []
   columns:
     Surgery: "category"
     Age: "ordinal"
@@ -24,9 +27,41 @@ horse-colic:
     Total_Protein: 'continuous'
     Abdominocentesis_Appearance: 'ordinal'
     Abdomcentesis_Total_Protein: 'continuous'
-    Outcome: 'target'
+    Outcome: 'category'
     Surgical_Lesion: 'ordinal'
     Lesion1: 'category'
     Lesion2: 'category'
     Lesion3: 'category'
     cp_data: 'category'
+iris:
+  url: "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
+  missing_ind: "?"
+  target: 'class'
+  sep: ","
+  drop: []
+  columns:
+    sepal_length: 'continuous'
+    sepal_width: 'continuous'
+    petal_length: 'continuous'
+    petal_width: 'continuous'
+    class: 'category'
+statlog_shuttle:
+  # Note that the shuttle training data is stored in zip format and needed to be downloaded
+  # and extracted to be processes
+  # original url: "https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/shuttle/shuttle.trn.Z"
+  url: "source_data/shuttle.trn"
+  missing_ind: "?"
+  target: 'class'
+  sep: " "
+  drop: []
+  columns:
+    x1: 'continuous'
+    x2: 'continuous'
+    x3: 'continuous'
+    x4: 'continuous'
+    x5: 'continuous'
+    x6: 'continuous'
+    x7: 'continuous'
+    x8: 'continuous'
+    x9: 'continuous'
+    class: 'category'

@@ -4,15 +4,34 @@ import yaml
 import numpy as np
 from dask import delayed, compute
 from dask.distributed import LocalCluster, Client
+import os
+
+def load(path):
+    df = pd.read_parquet(path)
+    X = df.iloc[:, 1:]
+    y = df.iloc[:, :1]
+
+    # set continuous feat missing values to median
+    X = X.fillna(X.median(numeric_only=True))
+
+    # One-hot encode categorical features
+    X = pd.get_dummies(X)
+
+    # Convert X to numpy array
+    X = X.values
+
+    # One-hot encode y
+    y = pd.get_dummies(y).values
+    return X, y
 
 def save_all_datasets(yaml_path, out_path):
     # Read in the data
     meta = parse_dataset_metadata(yaml_path)
 
     @delayed
-    def process_data(name, out_path, url, columns, dtype, missing_ind):
+    def process_data(name, out_path, **kwargs):
         # Get the dataset
-        df = get_dataset(url, columns, dtype, missing_ind)
+        df = get_dataset(**kwargs)
 
         # Write the data locally along with it's metadata to read later
         df.to_parquet(f"{out_path}/{name}.parquet", engine='pyarrow', compression='snappy')
@@ -29,24 +48,29 @@ def parse_dataset_metadata(path):
     for df, meta in dfs.items():
         out[df] = {
             'url' : meta['url'],
+            'target' : meta['target'],
             'missing_ind' : meta['missing_ind'],
+            'sep' : meta['sep'],
+            'drop' : meta['drop'],
             'columns' : list(meta['columns'].keys()),
             'dtype' : meta['columns']
         }
 
     return out
 
-def get_dataset(url, columns, dtype, missing_ind):
-    # Grab data from web
-    data = requests.get(url).content
+def get_dataset(url, columns, dtype, missing_ind, target, sep, drop):
+    if os.path.exists(url):
+        data = open("source_data/shuttle.trn", "r").read()
+    else:
+        # Grab data from web
+        data = requests.get(url).content.decode('utf-8')
 
     # Decode the data, split on rows, remove leading/trailing whitespace, and then finally split on cols
-    rows = [l.strip().split(" ") for l in data.decode('utf-8').split('\n') if l.strip() != ""]
+    rows = [l.strip().split(sep) for l in data.split('\n') if l.strip() != ""]
 
     # Convert to a pandas dataframe
     dtype_mapping = {
         'ordinal' : 'float32',
-        'target' : 'category',
         'continuous' : 'float32',
         "category" : "category"
     }
@@ -61,6 +85,20 @@ def get_dataset(url, columns, dtype, missing_ind):
     df = pd.DataFrame(rows, columns = columns) \
     .replace(missing_ind, np.nan) \
     .astype(pd_dtypes)
+
+    # Check if any numeric features have zero variation and drop
+    variation = df.var(numeric_only=True)
+    zero_var = variation[variation == 0].index.to_list()
+    drop = set(drop).union(set(zero_var))
+
+    # Check if any categorical cols have only one category
+    const_cat = [col for col in df.columns.to_list() if df[col].dtype == 'category']
+    const_cat = {col for col in const_cat if len(df[col].cat.categories) == 1}
+    drop = drop.union(const_cat)
+
+    # Move the target variable to the first col
+    oth_cols = list(set(df.columns.to_list()) - {target} - drop)
+    df = df[[target] + oth_cols]
     
     return df
 
