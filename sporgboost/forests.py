@@ -12,21 +12,21 @@ class AdaBoost(BaseAdaBoost):
         super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed)
 
 class SPORF(BaseRandomForest):
-    def __init__(self, n_trees = 500, max_depth = None, seed = 1234):
+    def __init__(self, d, s, n_trees = 500, max_depth = None, seed = 1234, **kwargs):
         self.base_classifer = SparseRandomDecisionTree
-        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed)
+        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, d=d, s=s)
 
 class SPORGBoost(BaseAdaBoost):
-    def __init__(self, n_trees = 500, max_depth = None, seed = 1234):
+    def __init__(self, d, s, n_trees = 500, max_depth = None, seed = 1234):
         self.base_classifer = SparseRandomDecisionTree
-        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed)
+        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, d=d, s=s)
 
 class RotationalRandomForest(BaseRandomForest):
-    def __init__(self, n_trees = 500, max_depth = None, seed = 1234):
+    def __init__(self, K, n_trees = 500, max_depth = None, seed = 1234):
         self.base_classifer = RotationalDecisionTree
-        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed)
+        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, K=K)
 
 class RotBoost(BaseAdaBoost):
-    def __init__(self, n_trees = 500, max_depth = None, seed = 1234):
+    def __init__(self, K, n_trees = 500, max_depth = None, seed = 1234):
         self.base_classifer = RotationalDecisionTree
-        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed)
+        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, K=K)

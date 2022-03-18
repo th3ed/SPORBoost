@@ -7,8 +7,9 @@ import numpy as np
 class BaseForest(BaseEstimator):
     def __init__(self,
                  n_trees = 500,
+                 seed = 1234,
                  max_depth = None,
-                 seed = 1234
+                 **kwargs
                  ):
         self.n_trees = n_trees
         self.max_depth = max_depth
@@ -17,7 +18,7 @@ class BaseForest(BaseEstimator):
 
         # Initialize the classifiers
         for idx_tree in prange(self.n_trees):
-            self._forest[idx_tree] = self.base_classifer(max_depth=self.max_depth)
+            self._forest[idx_tree] = self.base_classifer(max_depth=self.max_depth, **kwargs)
 
     def fit(self, X, y):
         self.n_classes = y.shape[1]
@@ -54,9 +55,10 @@ class BaseAdaBoost(BaseForest):
     def __init__(self,
                  n_trees = 500,
                  max_depth = 1,
-                 seed = 1234
+                 seed = 1234,
+                 **kwargs
                  ):
-        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed)
+        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, **kwargs)
 
     def fit(self, X, y):
         # Store metadata from training
