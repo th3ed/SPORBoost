@@ -21,10 +21,34 @@ def load(path):
     X = X.values
 
     # One-hot encode y
-    y = pd.get_dummies(y).values
+    y = pd.get_dummies(y.astype('category')).values
     return X, y
 
-def save_all_datasets(yaml_path, out_path):
+def process_simulated_datasets(in_path, out_path):
+    # Read in source data
+    dfs = {
+        'orthant_train' : pd.read_csv(f"{in_path}Orthant_train.csv", sep=",", header=None),
+        'orthant_test' : pd.read_csv(f"{in_path}Orthant_test.csv", sep=",", header=None),
+        'trunk_train' : pd.read_csv(f"{in_path}Trunk_train.csv", sep=",", header=None),
+        'trunk_test' : pd.read_csv(f"{in_path}Trunk_train.csv", sep=",", header=None),
+        'sparse_parity_train' : pd.read_csv(f"{in_path}Sparse_parity_train.csv", sep=",", header=None),
+        'sparse_parity_test' : pd.read_csv(f"{in_path}Sparse_parity_test.csv", sep=",", header=None)
+    }
+
+    for name, df in dfs.items():
+        # Label cols
+        df.columns = [f"x{i}" for i in range(len(df.columns) - 1)] + ['y']
+
+        # Reorder data
+        df = df[['y'] + df.drop(['y'], axis=1).columns.to_list()]
+
+        # Cast dtypes
+        df = df.astype('float32').astype({'y' : 'int'}).astype({'y' : 'category'})
+
+        # Save in parquet format
+        df.to_parquet(f"{out_path}{name}.parquet", engine='pyarrow', compression='snappy')
+
+def save_uci_datasets(yaml_path, out_path):
     # Read in the data
     meta = parse_dataset_metadata(yaml_path)
 
@@ -112,4 +136,5 @@ if __name__ == '__main__':
     client = Client(cluster)
 
     # Process all datasets given the expected yaml file
-    save_all_datasets("datasets.yaml", "data")
+    save_uci_datasets("datasets.yaml", "data")
+    process_simulated_datasets("source_data/simulated/", "data/")
