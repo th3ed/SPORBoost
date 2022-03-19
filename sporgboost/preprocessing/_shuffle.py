@@ -1,5 +1,7 @@
 import numpy as np
+from numba import njit
 
+@njit(cache=True)
 def shuffle(X, y):
     '''Shuffle both X and y vectors in unison
     

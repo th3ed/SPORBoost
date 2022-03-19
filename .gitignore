@@ -6,3 +6,7 @@ __pycache__/
 report/
 htmlcov/
 .coverage
+data/
+source_data/
+dask-worker-space/
+core.*

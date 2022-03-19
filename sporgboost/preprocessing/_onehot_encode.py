@@ -1,4 +1,7 @@
 import numpy as np
+from numba import njit
+
+@njit(cache=True)
 def onehot_encode(y, levels = 0):
     '''One-hot encoding of a 1d vector of indices into a 2d array of 0-1 values
     
