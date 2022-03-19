@@ -18,7 +18,7 @@ def load(path):
     X = pd.get_dummies(X)
 
     # Convert X to numpy array
-    X = X.values
+    X = X.values.astype('float64')
 
     # One-hot encode y
     y = pd.get_dummies(y.astype('category')).values

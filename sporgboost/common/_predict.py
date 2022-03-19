@@ -1,7 +1,7 @@
 from numba import njit
 import numpy as np
 
-# @njit(cache=True)
+@njit(cache=True)
 def _predict_tree(tree, X, n_classes):
     out = np.empty(shape=(X.shape[0], n_classes))
 
@@ -9,7 +9,7 @@ def _predict_tree(tree, X, n_classes):
     if tree.is_leaf():
         # Changed scoring value to use voting
         out[:,:] = 0.
-        out[:, np.argmax(tree.value)] = 1.
+        out[:, np.argmax(tree.value.flatten())] = 1.
     else:
         # Decision Stump, keep parsing
         # Project X, then compare against split value

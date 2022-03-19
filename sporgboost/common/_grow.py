@@ -5,17 +5,17 @@ from .._arrays import row_mean, row_nunique
 import numpy as np
 from numba import njit
 
-# node_type = deferred_type()
+node_type = deferred_type()
 
 # Node needs to be explicitly included in each tree type for numba
 # to properly compile
-# @jitclass([
-#     ('value', optional(float64[:,:])),
-#     ('left', optional(node_type)),
-#     ('right', optional(node_type)),
-#     ('proj', optional(float64[:,:])),
-#     ('split', optional(float64))
-# ])
+@jitclass([
+    ('value', optional(float64[:,:])),
+    ('left', optional(node_type)),
+    ('right', optional(node_type)),
+    ('proj', optional(float64[:,:])),
+    ('split', optional(float64))
+])
 class Node():
     def __init__(self):
         self.value = None
@@ -31,9 +31,10 @@ class Node():
         self.left = Node()
         self.right = Node()
         
-# node_type.define(Node.class_type.instance_type)
+node_type.define(Node.class_type.instance_type)
 
-def _grow_tree(X, y, proj, max_depth = None, **kwargs):
+@njit(parallel=True, cache=False)
+def _grow_tree(X, y, proj, max_depth, *args):
     # Initialize root of tree
     root = Node()
 
@@ -68,7 +69,7 @@ def _grow_tree(X, y, proj, max_depth = None, **kwargs):
 
             # Step 2: If node is not a leaf, find a split
             # Project data based on function
-            A = proj(X_, **kwargs)
+            A = proj(X_, *args)
 
             X_proj = X_ @ A
 
@@ -79,7 +80,7 @@ def _grow_tree(X, y, proj, max_depth = None, **kwargs):
 
             # Evaluate each col and candidate split
             col, node.split = best_split(X_proj, y_)
-            node.proj = A[:, col].reshape((-1, 1))
+            node.proj = np.ascontiguousarray(A[:, col]).reshape((-1, 1))
 
             # Initalize children and add to the next iteration to be processed
             node.init_children()

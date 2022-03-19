@@ -1,6 +1,14 @@
 from ._forest_base import BaseRandomForest, BaseAdaBoost
 from .trees import *
+from numba.experimental import jitclass
+from numba import uint32, optional
 
+# @jitclass(
+#     ('n_trees', uint32),
+#     ('max_depth', optional(uint32)),
+#     ('seed', uint32),
+#     ('base_classifier', )
+# )
 class RandomForest(BaseRandomForest):
     def __init__(self, n_trees = 500, max_depth = None, seed = 1234):
         self.base_classifer = AxisAlignedDecisionTree

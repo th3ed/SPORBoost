@@ -1,4 +1,3 @@
-from .trees import AxisAlignedDecisionTree
 from .preprocessing import onehot_encode
 from sklearn.base import BaseEstimator
 from numba import prange
