@@ -2,19 +2,19 @@ from numba import njit
 import numpy as np
 
 @njit(cache=True)
-def _predict_tree(tree, X, n_classes):
+def _predict_tree(tree_pointer, tree_value, tree_split, tree_proj, X, n_classes):
     out = np.empty(shape=(X.shape[0], n_classes))
 
-    # If we are at a leaf, return the value
-    if tree.is_leaf():
-        # Changed scoring value to use voting
+    # Traverse the tree, setting values as needed
+    if tree_pointer not in tree_split:
+        # Reached a leaf, return
         out[:,:] = 0.
-        out[:, np.argmax(tree.value.flatten())] = 1.
+        out[:, np.argmax(tree_value[tree_pointer].flatten())] = 1.
     else:
         # Decision Stump, keep parsing
         # Project X, then compare against split value
-        X_ = np.dot(X, tree.proj)
-        le = X_.flatten() <= tree.split
-        out[le, :] = _predict_tree(tree.left, X[le], n_classes)
-        out[~le, :] = _predict_tree(tree.right, X[~le], n_classes)
+        X_ = np.dot(X, tree_proj[tree_pointer])
+        le = X_.flatten() <= tree_split[tree_pointer]
+        out[le, :] = _predict_tree(tree_pointer * 10, tree_value, tree_split, tree_proj, X[le], n_classes)
+        out[~le, :] = _predict_tree(tree_pointer * 10 + 1, tree_value, tree_split, tree_proj, X[~le], n_classes)
     return out
