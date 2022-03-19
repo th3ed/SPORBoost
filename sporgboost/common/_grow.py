@@ -41,7 +41,7 @@ def _grow_tree(X, y, proj, max_depth, *args):
     # Each piece of work contains a pointer to 
     # the node being processed and the index positions
     # of obs at that node
-    nodes = [root]
+    nodes = {}
     node_train_idx = [np.arange(0, X.shape[0])]
 
     depth = 0
@@ -54,7 +54,9 @@ def _grow_tree(X, y, proj, max_depth, *args):
         nodes_added_in_round = 0
         for node_idx in range(start, end):
             # Get node and asociated obs
-            node, idx = nodes[node_idx], node_train_idx[node_idx]
+            idx = node_train_idx[node_idx]
+            node = {}
+
             X_, y_ = X[idx, :], y[idx, :]
 
             # Step 1: Check if node is a leaf
@@ -62,10 +64,12 @@ def _grow_tree(X, y, proj, max_depth, *args):
 
             # Leaf check 1: at max depth
             if depth == max_depth:
+                nodes[node_idx] = node
                 continue
 
             # Leaf check 2: partition is pure
             if gini_impurity(node['value']) == 0.:
+                nodes[node_idx] = node
                 continue
 
             # Step 2: If node is not a leaf, find a split
@@ -77,6 +81,7 @@ def _grow_tree(X, y, proj, max_depth, *args):
             # Leaf check 3: partition has no unique levels in X, can't
             # be partitioned further to improve performance
             if np.all(row_nunique(X_proj) <= 1):
+                nodes[node_idx] = node
                 continue
 
             # Evaluate each col and candidate split
@@ -87,11 +92,12 @@ def _grow_tree(X, y, proj, max_depth, *args):
             node['left'] = len(nodes)
             node['right'] = node['left'] + 1
 
+            # Add the node to the list
+            nodes[node_idx] = node
+
             # Get idx arrays for the split
             # le = (X_proj[:, col] <= node['split'])
-            nodes.append({})
             node_train_idx.append(idx[(X_proj[:, col] <= node['split'])])
-            nodes.append({})
             node_train_idx.append(idx[~(X_proj[:, col] <= node['split'])])
             nodes_added_in_round += 2
         
