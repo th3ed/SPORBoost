@@ -2,22 +2,25 @@ from numba.experimental import jitclass
 from numba.types import uint32, int64, DictType
 from .trees import *
 from ._forest_base import _rf_fit, _predict_forest, _predict_proba_forest
+import numpy as np
 
-@jitclass([
-    ('n_trees', uint32),
-    ('max_depth', int64),
-    ('seed', uint32),
-    ('forest', DictType(int64, AxisAlignedDecisionTree))
-])
+# @jitclass([
+#     ('n_trees', int64),
+#     ('max_depth', int64),
+#     ('seed', uint32),
+#     ('n_classes', int64),
+#     ('forest', DictType(int64, AxisAlignedDecisionTree.class_type.instance_type))
+# ])
 class RandomForest():
-    def __init__(self, n_trees = 500, max_depth = None, seed = 1234):
+    def __init__(self, n_trees = 500, max_depth = 10, seed = 1234):
         self.n_trees = n_trees
         self.max_depth = max_depth
         self.seed = seed
 
     def fit(self, X, y):
+        np.random.seed(self.seed)
         self.n_classes = y.shape[1]
-        self.forest = _rf_fit(X, y, AxisAlignedDecisionTree, self.n_trees, self.seed)
+        self.forest = _rf_fit(X, y, self.n_trees, self.max_depth)
 
     def predict(self, X):
         return _predict_forest(X, self.forest, self.n_classes)
