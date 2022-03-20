@@ -1,7 +1,7 @@
 from numba import njit
 import numpy as np
 import numpy as np
-from numba import njit, int64
+from numba import njit
 from ._arrays import row_mean, col_all, row_argmax
 
 @njit(cache=True, fastmath=True)
@@ -36,7 +36,7 @@ def pca(X):
     U, _, V = np.linalg.svd(X_, full_matrices=False)
 
     # SVD flip method
-    max_abs_cols = row_argmax(np.abs(U)).astype(int64).flatten()
+    max_abs_cols = row_argmax(np.abs(U)).astype(np.int64).flatten()
     signs = np.sign(np.diag(U[max_abs_cols, :]))
     U *= signs
     V *= signs.reshape((-1, 1))
