@@ -1,40 +1,51 @@
-from ._forest_base import BaseRandomForest, BaseAdaBoost
-from .trees import *
 from numba.experimental import jitclass
-from numba import uint32, optional
+from numba.types import uint32, int64, DictType
+from .trees import *
+from ._forest_base import _rf_fit, _predict_forest, _predict_proba_forest
 
-# @jitclass(
-#     ('n_trees', uint32),
-#     ('max_depth', optional(uint32)),
-#     ('seed', uint32),
-#     ('base_classifier', )
-# )
-class RandomForest(BaseRandomForest):
+@jitclass([
+    ('n_trees', uint32),
+    ('max_depth', int64),
+    ('seed', uint32),
+    ('forest', DictType(int64, AxisAlignedDecisionTree))
+])
+class RandomForest():
     def __init__(self, n_trees = 500, max_depth = None, seed = 1234):
-        self.base_classifer = AxisAlignedDecisionTree
-        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed)
+        self.n_trees = n_trees
+        self.max_depth = max_depth
+        self.seed = seed
 
-class AdaBoost(BaseAdaBoost):
-    def __init__(self, n_trees = 500, max_depth = 1, seed = 1234):
-        self.base_classifer = AxisAlignedDecisionTree
-        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed)
+    def fit(self, X, y):
+        self.n_classes = y.shape[1]
+        self.forest = _rf_fit(X, y, AxisAlignedDecisionTree, self.n_trees, self.seed)
 
-class SPORF(BaseRandomForest):
-    def __init__(self, d, s, n_trees = 500, max_depth = None, seed = 1234, **kwargs):
-        self.base_classifer = SparseRandomDecisionTree
-        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, d=d, s=s)
+    def predict(self, X):
+        return _predict_forest(X, self.forest, self.n_classes)
 
-class SPORGBoost(BaseAdaBoost):
-    def __init__(self, d, s, n_trees = 500, max_depth = None, seed = 1234):
-        self.base_classifer = SparseRandomDecisionTree
-        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, d=d, s=s)
+    def predict_proba(self, X):
+        return _predict_proba_forest(X, self.forest, self.n_classes)
 
-class RotationalRandomForest(BaseRandomForest):
-    def __init__(self, K, n_trees = 500, max_depth = None, seed = 1234):
-        self.base_classifer = RotationalDecisionTree
-        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, K=K)
+# class AdaBoost(BaseAdaBoost):
+#     def __init__(self, n_trees = 500, max_depth = 1, seed = 1234):
+#         self.base_classifer = AxisAlignedDecisionTree
+#         super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed)
 
-class RotBoost(BaseAdaBoost):
-    def __init__(self, K, n_trees = 500, max_depth = None, seed = 1234):
-        self.base_classifer = RotationalDecisionTree
-        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, K=K)
+# class SPORF(BaseRandomForest):
+#     def __init__(self, d, s, n_trees = 500, max_depth = None, seed = 1234, **kwargs):
+#         self.base_classifer = SparseRandomDecisionTree
+#         super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, d=d, s=s)
+
+# class SPORGBoost(BaseAdaBoost):
+#     def __init__(self, d, s, n_trees = 500, max_depth = None, seed = 1234):
+#         self.base_classifer = SparseRandomDecisionTree
+#         super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, d=d, s=s)
+
+# class RotationalRandomForest(BaseRandomForest):
+#     def __init__(self, K, n_trees = 500, max_depth = None, seed = 1234):
+#         self.base_classifer = RotationalDecisionTree
+#         super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, K=K)
+
+# class RotBoost(BaseAdaBoost):
+#     def __init__(self, K, n_trees = 500, max_depth = None, seed = 1234):
+#         self.base_classifer = RotationalDecisionTree
+#         super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, K=K)

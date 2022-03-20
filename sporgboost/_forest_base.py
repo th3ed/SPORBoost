@@ -1,116 +1,141 @@
 from .preprocessing import onehot_encode
 from sklearn.base import BaseEstimator
 import numpy as np
+from numba import njit, prange
 
-class BaseForest(BaseEstimator):
-    def __init__(self,
-                 n_trees = 500,
-                 seed = 1234,
-                 max_depth = None,
-                 **kwargs
-                 ):
+@njit(cache=True, fastmath=True)
+def _predict_proba_forest(X, forest, n_classes):
+    # Scoring can be done in parallel in all cases
+    out = np.zeros(shape=(X.shape[0], n_classes), dtype='float')
+    for idx_tree in range(len(forest)):
+        out += forest[idx_tree].predict(X)
+
+    # Average prediction from all trees
+    out /= len(forest)
+
+    return out
+
+@njit(cache=True, fastmath=True)
+def _predict_forest(X, forest, n_classes):
+    out = np.zeros(shape=(X.shape[0], n_classes))
+    probs = _predict_proba_forest(X, forest, n_classes)
+    return onehot_encode(np.argmax(probs, axis=1), levels=n_classes)
+
+# Can't cache parallel functions
+@njit(cache=False, parallel=True, fastmath=True)
+def _rf_fit(X, y, base_classifier, n_trees, seed, *args):
+    np.random.seed(seed)
+
+    # Initalize trees
+    forest = {}
+
+    for idx_forest in prange(n_trees):
+        # Draw a bootstrapped sample
+        idx_rows = np.random.choice(np.arange(X.shape[0]), size=(X.shape[0]), replace=True)
+
+        # Init and train a tree
+        forest[idx_forest] = base_classifier(*args)
+        forest[idx_forest].fit(X[idx_rows, :], y[idx_rows,:])
+    
+    return forest
+
+@njit(cache=True, fastmath=True)
+def _ada_fit(X, y, base_classifier, n_trees, seed, *args):
+    np.random.seed(seed)
+
+    # Initalize trees
+    forest = {}
+    n_classes = y.shape[1]
+
+    # Boosted trees must be fit sequentially
+    # Give all samples equal weight initially
+    D = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
+
+    for idx_forest in range(n_trees):
+        invalid_tree = True
+        attempt = 0
+        max_attempts = 5
+        while invalid_tree and (attempt < max_attempts):
+            attempt += 1
+
+            # Draw a sample
+            idx_rows = np.random.choice(np.arange(X.shape[0]), size=(X.shape[0]), replace=True, p=D)
+
+            # Init and train a tree
+            forest[idx_forest] = base_classifier(*args)
+            forest[idx_forest].fit(X[idx_rows, :], y[idx_rows,:])
+
+            # Update weights based on forest errors
+            y_pred = _predict_forest(X, forest, n_classes)
+
+            # Perform a weight update
+            miss = _ada_misclassified(y, y_pred)
+            eta = _ada_eta(miss, D)
+
+            # Discard tree if eta=0 or eta>0.5
+            if eta == 0. or eta >= 0.5:
+                continue
+            
+            # Tree is valid, we can update weights and break the loop
+            invalid_tree + False
+
+            D = _ada_weight_update(y, y_pred, D, eta, miss)
+
+        if invalid_tree:
+            print("Terminated after {max_attempts} candidate trees were rejected")
+            continue
+
+    return forest
+
+@njit(cache=True, fastmath=True)
+def _ada_misclassified(y_true, y_pred):
+    return np.all(y_true == y_pred, axis=1)
+
+@njit(cache=True, fastmath=True)
+def _ada_eta(misclassified, D):
+    return np.sum(misclassified * D)
+
+@njit(cache=True, fastmath=True)
+def _ada_alpha(eta):
+    return 0.5 * np.log((1 - eta) / eta)
+
+@njit(cache=True, fastmath=True)
+def _ada_weight_update(y_true, y_pred, D, eta, miss):
+    alpha = _ada_alpha(eta)
+
+    # Check if we are upweighting or downweighting
+    scalar = np.full(shape=(y_true.shape[0]), fill_value=alpha)
+    scalar[~miss] *= -1
+
+    # Compute non-normalized weight updates
+    D_new = D * np.exp(scalar)
+
+    D_new /= D_new.sum()
+
+    return D_new
+
+from numba.experimental import jitclass
+from numba.types import uint32, int64, DictType
+from .trees import *
+
+@jitclass([
+    ('n_trees', uint32),
+    ('max_depth', int64),
+    ('seed', uint32),
+    ('forest', DictType(int64, AxisAlignedDecisionTree))
+])
+class RandomForest():
+    def __init__(self, n_trees = 500, max_depth = None, seed = 1234):
         self.n_trees = n_trees
         self.max_depth = max_depth
-        self._forest = np.empty((self.n_trees), dtype='object')
         self.seed = seed
-
-        # Initialize the classifiers
-        for idx_tree in range(self.n_trees):
-            self._forest[idx_tree] = self.base_classifer(max_depth=self.max_depth, **kwargs)
 
     def fit(self, X, y):
         self.n_classes = y.shape[1]
-        np.random.seed(self.seed)
-
-    def predict_proba(self, X):
-        # Scoring can be done in parallel in all cases
-        out = np.zeros(shape=(X.shape[0], self.n_classes), dtype='float')
-        for idx_tree in range(self.n_trees):
-            out += self._forest[idx_tree].predict(X)
-
-        # Average prediction from all trees
-        out /= self.n_trees
-
-        return out
+        self.forest = _rf_fit(X, y, AxisAlignedDecisionTree, self.n_trees, self.seed)
 
     def predict(self, X):
-        out = np.zeros(shape=(X.shape[0], self.n_classes))
-        probs = self.predict_proba(X)
-        return onehot_encode(np.argmax(probs, axis=1), levels=self.n_classes)
+        return _predict_forest(X, self.forest, self.n_classes)
 
-class BaseRandomForest(BaseForest):
-    def fit(self, X, y):
-        # Store metadata from training
-        super().fit(X,y)
-
-        # Random Forest trees can be fit in parallel
-        for idx_tree in range(self.n_trees):
-            # Draw a bootstrapped sample
-            idx_rows = np.random.choice(np.arange(X.shape[0]), size=(X.shape[0]), replace=True)
-            self._forest[idx_tree].fit(X[idx_rows, :], y[idx_rows,:])
-
-class BaseAdaBoost(BaseForest):
-    def __init__(self,
-                 n_trees = 500,
-                 max_depth = 1,
-                 seed = 1234,
-                 **kwargs
-                 ):
-        super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, **kwargs)
-
-    def fit(self, X, y):
-        # Store metadata from training
-        super().fit(X,y)
-
-        # Boosted trees must be fit sequentially
-        # Give all samples equal weight initially
-        D = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
-
-        final_n_trees = self.n_trees
-        self.n_trees = 0
-        for idx_tree in range(final_n_trees):
-            # Draw a sample and fit a tree
-            idx_rows = np.random.choice(np.arange(X.shape[0]), size=(X.shape[0]), replace=True, p=D)
-            self._forest[idx_tree].fit(X[idx_rows, :], y[idx_rows,:])
-
-            # Update weights based on forest errors
-            self.n_trees += 1
-            y_pred = self.predict(X)
-
-            # Terminate early if all predictions match actuals
-            if np.all(y_pred == y):
-                break
-
-            D = BaseAdaBoost._weight_update(y, y_pred, D)
-
-        # Remove any unused trees
-        self._forest = self._forest[:self.n_trees]
-            
-
-    @staticmethod
-    def _misclassified(y_true, y_pred):
-        return np.all(y_true == y_pred, axis=1)
-
-    @staticmethod
-    def _eta(misclassified, D):
-        return np.sum(misclassified * D)
-
-    @staticmethod
-    def _alpha(eta):
-        return 0.5 * np.log((1 - eta) / eta)
-
-    @staticmethod
-    def _weight_update(y_true, y_pred, D):
-        miss = BaseAdaBoost._misclassified(y_true, y_pred)
-        alpha = BaseAdaBoost._alpha(BaseAdaBoost._eta(miss, D))
-
-        # Check if we are upweighting or downweighting
-        scalar = np.full(shape=(y_true.shape[0]), fill_value=alpha)
-        scalar[~miss] *= -1
-
-        # Compute non-normalized weight updates
-        D_new = D * np.exp(scalar)
-
-        D_new /= D_new.sum()
-
-        return D_new
+    def predict_proba(self, X):
+        return _predict_forest(X, self.forest, self.n_classes)
