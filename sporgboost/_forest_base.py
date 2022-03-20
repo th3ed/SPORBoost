@@ -1,10 +1,9 @@
 from sporgboost.trees import AxisAlignedDecisionTree
-from .preprocessing import onehot_encode
-from sklearn.base import BaseEstimator
 import numpy as np
 from numba import njit, prange
+from ._arrays import col_argmax
 
-# @njit(cache=True, fastmath=True)
+@njit(cache=True, fastmath=True)
 def _predict_proba_forest(X, forest, n_classes):
     # Scoring can be done in parallel in all cases
     out = np.zeros(shape=(X.shape[0], n_classes), dtype='float')
@@ -16,19 +15,19 @@ def _predict_proba_forest(X, forest, n_classes):
 
     return out
 
-# @njit(cache=True, fastmath=True)
+@njit(cache=True, fastmath=True)
 def _predict_forest(X, forest, n_classes):
-    out = np.zeros(shape=(X.shape[0], n_classes))
     probs = _predict_proba_forest(X, forest, n_classes)
-    return onehot_encode(np.argmax(probs, axis=1).astype('int'), levels=n_classes)
+    votes = col_argmax(probs)
+    return votes
 
 # Can't cache parallel functions
-# @njit(cache=False, fastmath=True)
+@njit(cache=False, fastmath=True)
 def _rf_fit(X, y, n_trees, max_depth):
     # Initalize trees
     forest = {}
 
-    for idx_forest in range(n_trees):
+    for idx_forest in prange(n_trees):
         # Draw a bootstrapped sample
         idx_rows = np.random.choice(np.arange(X.shape[0]), size=(X.shape[0]), replace=True)
 

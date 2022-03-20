@@ -3,13 +3,13 @@ from numba.types import uint32, int64, DictType
 from .trees import *
 from ._forest_base import _rf_fit, _predict_forest, _predict_proba_forest
 
-# @jitclass([
-#     ('n_trees', uint32),
-#     ('max_depth', int64),
-#     ('seed', uint32),
-#     ('forest', DictType(int64, AxisAlignedDecisionTree.class_type.instance_type)),
-#     ('n_classes', uint32)
-# ])
+@jitclass([
+    ('n_trees', uint32),
+    ('max_depth', int64),
+    ('seed', uint32),
+    ('forest', DictType(int64, AxisAlignedDecisionTree.class_type.instance_type)),
+    ('n_classes', uint32)
+])
 class RandomForest():
     def __init__(self, n_trees = 500, max_depth = 10, seed = 1234):
         self.n_trees = n_trees

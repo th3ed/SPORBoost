@@ -21,7 +21,7 @@ def load(path):
     X = X.values.astype('float64')
 
     # One-hot encode y
-    y = pd.get_dummies(y.astype('category')).values
+    y = pd.get_dummies(y.astype('category')).values.astype('float64')
     return X, y
 
 def process_simulated_datasets(in_path, out_path):
