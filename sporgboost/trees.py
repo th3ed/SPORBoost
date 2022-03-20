@@ -2,8 +2,6 @@ from sporgboost.common import _predict_tree, _grow_tree
 from sporgboost.projections import identity, sparse_random, rotation
 from numba.experimental import jitclass
 from numba.types import DictType, int64, float64, int64
-from .preprocessing import onehot_encode
-import numpy as np
 
 dt_spec = [
     ('tree_value', DictType(int64, float64[:,:])),
@@ -13,35 +11,17 @@ dt_spec = [
     ('max_depth', int64)
 ]
 
-# @jitclass(dt_spec)
+@jitclass(dt_spec)
 class AxisAlignedDecisionTree():
-    def __init__(self, n_classes = 0, max_depth = 10):
-        self.n_classes = n_classes
+    def __init__(self, max_depth = 10):
         self.max_depth = max_depth
 
-    def fit(self, X, y, sample_weight):
-        # Onehot encode y
-        y_ = onehot_encode(y, levels=self.n_classes)
-
-        self.n_classes = y_.shape[1]
-        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y_, identity, self.max_depth)
+    def fit(self, X, y):
+        self.n_classes = y.shape[1]
+        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y, identity, self.max_depth)
 
     def predict(self, X):
-        return np.argmax(_predict_tree(1, self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes), axis=1)
-
-    def predict_proba(self, X):
         return _predict_tree(1, self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes)
-
-    def get_params(self, deep=True):
-        return {
-            'max_depth' : self.max_depth,
-            'n_classes' : self.n_classes
-        }
-
-    def set_params(self, n_classes = 0, max_depth = 10):
-        self.max_depth = max_depth
-        self.n_classes = n_classes
-        return self
 
 @jitclass(dt_spec + [
     ('d', int64),
