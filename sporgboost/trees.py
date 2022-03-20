@@ -13,7 +13,7 @@ dt_spec = [
 
 @jitclass(dt_spec)
 class AxisAlignedDecisionTree():
-    def __init__(self, max_depth = 10):
+    def __init__(self, max_depth):
         self.max_depth = max_depth
 
     def fit(self, X, y):
