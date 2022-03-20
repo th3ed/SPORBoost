@@ -1,9 +1,9 @@
 from sporgboost.common import best_split, gini_impurity
 from .._arrays import row_mean, row_nunique
 import numpy as np
-from numba import njit, prange
+from numba import njit, range
 
-@njit(parallel = False, cache=True)
+@njit(cache=True, fastmath=True)
 def _grow_tree(X, y, proj, max_depth, *args):
     # Each piece of work contains a pointer to 
     # the node being processed and the index positions
@@ -21,7 +21,7 @@ def _grow_tree(X, y, proj, max_depth, *args):
 
     while (depth <= max_depth) and len(node_train_idx) > 0:
         # Parallel loop over all nodes to be processed
-        for _ in prange(len(node_train_idx)):
+        for _ in range(len(node_train_idx)):
             # Get node and asociated obs
             node_idx, idx = node_train_idx.popitem()
 

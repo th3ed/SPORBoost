@@ -1,6 +1,5 @@
 from .preprocessing import onehot_encode
 from sklearn.base import BaseEstimator
-from numba import prange
 import numpy as np
 
 class BaseForest(BaseEstimator):
@@ -16,7 +15,7 @@ class BaseForest(BaseEstimator):
         self.seed = seed
 
         # Initialize the classifiers
-        for idx_tree in prange(self.n_trees):
+        for idx_tree in range(self.n_trees):
             self._forest[idx_tree] = self.base_classifer(max_depth=self.max_depth, **kwargs)
 
     def fit(self, X, y):
@@ -26,7 +25,7 @@ class BaseForest(BaseEstimator):
     def predict_proba(self, X):
         # Scoring can be done in parallel in all cases
         out = np.zeros(shape=(X.shape[0], self.n_classes), dtype='float')
-        for idx_tree in prange(self.n_trees):
+        for idx_tree in range(self.n_trees):
             out += self._forest[idx_tree].predict(X)
 
         # Average prediction from all trees
@@ -45,7 +44,7 @@ class BaseRandomForest(BaseForest):
         super().fit(X,y)
 
         # Random Forest trees can be fit in parallel
-        for idx_tree in prange(self.n_trees):
+        for idx_tree in range(self.n_trees):
             # Draw a bootstrapped sample
             idx_rows = np.random.choice(np.arange(X.shape[0]), size=(X.shape[0]), replace=True)
             self._forest[idx_tree].fit(X[idx_rows, :], y[idx_rows,:])

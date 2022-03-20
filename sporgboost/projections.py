@@ -4,11 +4,11 @@ import numpy as np
 from numba import njit
 from ._arrays import row_mean, col_all
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def identity(X):
     return np.eye(X.shape[1])
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def sparse_random(X, d, s):
     p = X.shape[1]
 
@@ -27,7 +27,7 @@ def sparse_random(X, d, s):
         bad = col_all(out == 0)
     return out
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def pca(X):
     # Step 1: Center data
     X_ = X - row_mean(X)
@@ -42,7 +42,7 @@ def pca(X):
     V *= signs.reshape((-1, 1))
     return V.T
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def rotation(X, K):
     idx = np.arange(X.shape[1])
     np.random.shuffle(idx)

@@ -1,10 +1,9 @@
-from multiprocessing.sharedctypes import Value
-from numba import njit, prange
+from numba import njit
 import numpy as np
 from .._arrays import row_cumsum, collapse_levels
 from ._gini import gini_impurity
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def best_split(X, y):
     col_split_gini = find_split(X, y)
     
@@ -12,17 +11,17 @@ def best_split(X, y):
     col_idx = np.argmin(col_split_gini[:,1])
     return (col_idx, col_split_gini[col_idx, 0])
 
-@njit(parallel=False, cache=True)
+@njit(cache=True, fastmath=True)
 def find_split(X, y):
     # Evaluate best split among each feature
     # 2d array where rows correspond to each col, 1st col is
     # split value and 2nd is gini
     col_split_gini = np.empty(shape = (X.shape[1], 2))
-    for i in prange(0, X.shape[1]):
+    for i in range(0, X.shape[1]):
         col_split_gini[i, :] = _find_split_feat(X[:, i], y)
     return col_split_gini
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def _find_split_feat(X, y):
     '''Determines where a split should be placed along a 1-d continuous feature col wrt y
     
@@ -68,7 +67,7 @@ def _find_split_feat(X, y):
 
     return _best_split_feat(X_[:-1], gini_split)
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def _best_split_feat(X, gini):
     '''Proposes a split based on a sorted vector X and vector of weighted gini impunities
     

@@ -1,7 +1,7 @@
 from numba import njit
 import numpy as np
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def _predict_tree(tree_pointer, tree_value, tree_split, tree_proj, X, n_classes):
     out = np.empty(shape=(X.shape[0], n_classes))
 
