@@ -1,4 +1,4 @@
-from sporgboost.trees import AxisAlignedDecisionTree
+from sporgboost.trees import AxisAlignedDecisionTree, SparseRandomDecisionTree
 import numpy as np
 from numba import njit, prange
 from ._arrays import col_argmax
@@ -20,22 +20,6 @@ def _predict_forest(X, forest, n_classes):
     probs = _predict_proba_forest(X, forest, n_classes)
     votes = col_argmax(probs)
     return votes
-
-# Can't cache parallel functions
-@njit(cache=False, fastmath=True)
-def _rf_fit(X, y, n_trees, max_depth):
-    # Initalize trees
-    forest = {}
-
-    for idx_forest in prange(n_trees):
-        # Draw a bootstrapped sample
-        idx_rows = np.random.choice(np.arange(X.shape[0]), size=(X.shape[0]), replace=True)
-
-        # Init and train a tree
-        forest[idx_forest] = AxisAlignedDecisionTree(max_depth)
-        forest[idx_forest].fit(X[idx_rows, :], y[idx_rows,:])
-    
-    return forest
 
 @njit(cache=True, fastmath=True)
 def _ada_fit(X, y, base_classifier, n_trees, seed, *args):

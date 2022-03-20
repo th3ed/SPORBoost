@@ -38,7 +38,7 @@ class SparseRandomDecisionTree():
         self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y, sparse_random, self.max_depth, self.d, self.s)
 
     def predict(self, X):
-        return _predict_tree(1, self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes)
+        return _predict_tree(self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes)
 
 
 @jitclass(dt_spec + [
@@ -54,4 +54,4 @@ class RotationalDecisionTree():
         self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y, rotation, self.max_depth, self.K)
 
     def predict(self, X):
-        return _predict_tree(1, self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes)
+        return _predict_tree(self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes)

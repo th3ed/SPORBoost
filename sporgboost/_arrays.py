@@ -2,18 +2,14 @@ from numba import njit
 import numpy as np
 
 @njit(cache=True, fastmath=True)
+def row_argmax(X):
+    out = np.zeros(X.shape)
+    for idx_y in range(0, X.shape[1]):
+        out[np.argmax(X[:, idx_y]), idx_y] = 1
+    return out
+
+@njit(cache=True, fastmath=True)
 def col_argmax(X):
-    '''Numba optimized implementation of row-cumsum
-    This function is needed to allow broader functions such as find_split compile with numba. Numba
-    supports cumsum() but only with no axis arguments, this function essentially loops over the
-    columns to achieve a cumsum(axis=0)
-    
-    Args:
-        X (Array): The array to cumsum(axis=0) over
-    
-    Returns:
-        An array with the same shape as X with cumsum(axis=0) values
-    '''
     out = np.zeros(X.shape)
     for idx_x in range(0, X.shape[0]):
         out[idx_x, np.argmax(X[idx_x, :])] = 1
