@@ -1,7 +1,7 @@
 from sporgboost.common import best_split, gini_impurity
 from .._arrays import row_mean, row_nunique
 import numpy as np
-from numba import njit, range
+from numba import njit
 
 @njit(cache=True, fastmath=True)
 def _grow_tree(X, y, proj, max_depth, *args):
