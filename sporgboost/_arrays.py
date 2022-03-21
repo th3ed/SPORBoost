@@ -100,13 +100,29 @@ def row_nunique(y):
 
 @njit(cache=True, fastmath=True)
 def collapse_levels(X, y):
-    # Get unique levels of X, and init outputs
-    X_ = np.unique(X)
-    y_ = np.empty(shape=(X_.shape[0], y.shape[1]), dtype='float')
-    n_ = np.empty(shape=(X_.shape[0]), dtype='int')
+    y_ = {}
+    n_ = {}
 
-    for idx_x in range(0, X_.shape[0]):
-        match = (X == X_[idx_x])
-        y_[idx_x, :] = y[match, :].sum(axis=0)
-        n_[idx_x] = match.sum()
-    return X_, y_, n_
+    # First pass: collapse any repeat values of X
+    for idx_row in range(X.shape[0]):
+        x_row = X[idx_row]
+        y_row = y[idx_row, :]
+        if x_row not in y_:
+            y_[x_row] = y_row
+            n_[x_row] = 1
+        else:
+            y_[x_row] += y_row
+            n_[x_row] += 1
+
+    # Second pass: convert to arrays and apply sort
+    X_ = np.array(list(y_.keys()))
+
+    # For y we need to allocate a new array and fill it
+    y2_ = np.empty(shape=(X_.shape[0], y.shape[1]))
+    for idx in range(y2_.shape[0]):
+        x = X_[idx]
+        y2_[idx, :] = y_[x]
+
+    n_ = np.array(list(n_.values()))
+    idx = np.argsort(X_)
+    return X_[idx], y2_[idx, :], n_[idx]
