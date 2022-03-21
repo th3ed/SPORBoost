@@ -13,7 +13,7 @@ from numba.typed import Dict
     ('n_classes', uint32)
 ])
 class RandomForest():
-    def __init__(self, n_trees = 100, max_depth = 10, seed = 1234):
+    def __init__(self, n_trees = 500, max_depth = 10, seed = 1234):
         self.n_trees = n_trees
         self.max_depth = max_depth
         self.seed = seed
@@ -49,7 +49,7 @@ class RandomForest():
     ('n_classes', uint32)
 ])
 class SPORF():
-    def __init__(self, d, s, n_trees = 100, max_depth = 10, seed = 1234):
+    def __init__(self, d, s, n_trees = 500, max_depth = 10, seed = 1234):
         self.d = d
         self.s = s
         self.n_trees = n_trees
@@ -86,7 +86,7 @@ class SPORF():
     ('n_classes', uint32)
 ])
 class RotationalForest():
-    def __init__(self, K, n_trees = 100, max_depth = 10, seed = 1234):
+    def __init__(self, K, n_trees = 500, max_depth = 10, seed = 1234):
         self.K = K
         self.n_trees = n_trees
         self.max_depth = max_depth

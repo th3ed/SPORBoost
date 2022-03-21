@@ -29,6 +29,8 @@ def sparse_random(X, d, s):
 
 @njit(cache=True, fastmath=True)
 def pca(X):
+    out = np.zeros(shape=(X.shape[1], X.shape[1]))
+
     # Step 1: Center data
     X_ = X - row_mean(X)
 
@@ -40,7 +42,13 @@ def pca(X):
     signs = np.sign(np.diag(U[max_abs_cols, :]))
     U *= signs
     V *= signs.reshape((-1, 1))
-    return V.T
+    V = V.T
+
+    # If N < M, by default numpy truncates the matrix of PCA weights
+    # to N*M. We will fill in the remainer with zeros to not mess with
+    # the shape rotation expects
+    out[:, :V.shape[1]] = V
+    return out
 
 @njit(cache=True, fastmath=True)
 def rotation(X, K):
@@ -49,17 +57,15 @@ def rotation(X, K):
     parts = np.array_split(idx, K)
 
     out = np.zeros((X.shape[1], X.shape[1]))
-    lens = np.array([len(x) for x in parts])
-    ends = np.cumsum(lens)
-    starts = ends - lens
+    start = 0
     for idx_p in range(0, len(parts)):
         # Get index and relevant data
         p = parts[idx_p]
-        start = starts[idx_p]
         end = start + len(p)
         X_ = X[:, p]
 
         # Project the data and save the weights
         out[p, start:end] = pca(X_)
+        start = end
 
     return out
