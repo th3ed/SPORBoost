@@ -1,7 +1,6 @@
-from sporgboost.trees import AxisAlignedDecisionTree, SparseRandomDecisionTree
 import numpy as np
-from numba import njit, prange
-from ._arrays import col_argmax
+from numba import njit
+from ._arrays import col_argmax, col_all
 
 @njit(cache=True, fastmath=True)
 def _predict_proba_forest(X, forest, n_classes):
@@ -22,56 +21,8 @@ def _predict_forest(X, forest, n_classes):
     return votes
 
 @njit(cache=True, fastmath=True)
-def _ada_fit(X, y, base_classifier, n_trees, seed, *args):
-    np.random.seed(seed)
-
-    # Initalize trees
-    forest = {}
-    n_classes = y.shape[1]
-
-    # Boosted trees must be fit sequentially
-    # Give all samples equal weight initially
-    D = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
-
-    for idx_forest in range(n_trees):
-        invalid_tree = True
-        attempt = 0
-        max_attempts = 5
-        while invalid_tree and (attempt < max_attempts):
-            attempt += 1
-
-            # Draw a sample
-            idx_rows = np.random.choice(np.arange(X.shape[0]), size=(X.shape[0]), replace=True, p=D)
-
-            # Init and train a tree
-            forest[idx_forest] = base_classifier(*args)
-            forest[idx_forest].fit(X[idx_rows, :], y[idx_rows,:])
-
-            # Update weights based on forest errors
-            y_pred = _predict_forest(X, forest, n_classes)
-
-            # Perform a weight update
-            miss = _ada_misclassified(y, y_pred)
-            eta = _ada_eta(miss, D)
-
-            # Discard tree if eta=0 or eta>0.5
-            if eta == 0. or eta >= 0.5:
-                continue
-            
-            # Tree is valid, we can update weights and break the loop
-            invalid_tree + False
-
-            D = _ada_weight_update(y, y_pred, D, eta, miss)
-
-        if invalid_tree:
-            print("Terminated after {max_attempts} candidate trees were rejected")
-            continue
-
-    return forest
-
-@njit(cache=True, fastmath=True)
 def _ada_misclassified(y_true, y_pred):
-    return np.all(y_true == y_pred, axis=1)
+    return col_all(y_true == y_pred)
 
 @njit(cache=True, fastmath=True)
 def _ada_eta(misclassified, D):

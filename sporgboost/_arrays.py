@@ -126,3 +126,17 @@ def collapse_levels(X, y):
     n_ = np.array(list(n_.values()))
     idx = np.argsort(X_)
     return X_[idx], y2_[idx, :], n_[idx]
+
+@njit(cache=True)
+def choice_replacement_weighted(X, y, D):
+    idx = weighted_draws_replacement(np.arange(X.shape[0]), D, X.shape[0])
+    return X[idx, :], y[idx, :]
+
+@njit(cache=True)
+def weighted_draws_replacement(a, p, n):
+    out = np.empty(shape=(n), dtype='uint')
+
+    for idx in range(n):
+        # https://github.com/numba/numba/issues/2539
+        out[idx] = a[np.searchsorted(np.cumsum(p), np.random.random(), side="right")]
+    return out
