@@ -3,7 +3,8 @@ import numpy as np
 
 @njit(cache=True, fastmath=True)
 def _predict_tree(tree_value, tree_split, tree_proj, X, n_classes):
-    out = np.empty(shape=(X.shape[0], n_classes))
+    pred_mat = np.eye(n_classes)
+    out = np.zeros(shape=(X.shape[0], n_classes))
 
     node_eval = {1 : np.arange(X.shape[0])}
 
@@ -15,7 +16,8 @@ def _predict_tree(tree_value, tree_split, tree_proj, X, n_classes):
         # Are we at a leaf?
         if idx_node not in tree_split:
             # Reached a leaf, set value
-            out[idx_rows, :] = tree_value[idx_node]
+
+            out[idx_rows, :] = pred_mat[np.argmax(tree_value[idx_node]), :]
             continue
         
         # Decision Stump, eval split and keep iterating
