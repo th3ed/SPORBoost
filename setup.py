@@ -3,12 +3,12 @@
 from setuptools import setup
 
 packages = [
-      "sporgboost"
+      "sporboost"
 ]
 
-setup(name='sporgboost',
-      version='0.1',
-      description='Sparse Projection Oblique Randomer Gradient Boosting',
+setup(name='sporboost',
+      version='2022.3.0',
+      description='Sparse Projection Oblique Randomer Boosting',
       author='Ed Andrews',
       author_email='ed4ndrews@gmail.com',
       tests_require=["pytest"],
