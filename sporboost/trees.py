@@ -1,5 +1,5 @@
-from sporgboost.common import _predict_tree, _grow_tree
-from sporgboost.projections import identity, sparse_random, rotation
+from .common import _predict_tree, _grow_tree
+from .projections import identity, sparse_random, rotation
 from numba.experimental import jitclass
 from numba.types import DictType, int64, float64, int64
 import numpy as np

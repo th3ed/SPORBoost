@@ -1,4 +1,4 @@
-from sporgboost.common import best_split, gini_impurity
+from . import best_split, gini_impurity
 from .._arrays import row_mean, row_nunique, row_norm
 import numpy as np
 from numba import njit

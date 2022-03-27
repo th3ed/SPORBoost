@@ -4,7 +4,7 @@ os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 import pytest
 import sklearn.datasets
-from sporgboost.projections import *
+from sporboost.projections import *
 import numpy as np
 from sklearn.decomposition import PCA
 

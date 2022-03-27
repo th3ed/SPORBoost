@@ -6,8 +6,8 @@ import pytest
 import numpy as np
 import pandas as pd
 import sklearn.datasets
-from sporgboost._arrays import *
-from sporgboost.preprocessing import onehot_encode
+from sporboost._arrays import *
+from sporboost.preprocessing import onehot_encode
 
 @pytest.fixture
 def data_iris():

@@ -4,7 +4,7 @@ os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 import pytest
 import sklearn.datasets
-from sporgboost.preprocessing import shuffle
+from sporboost.preprocessing import shuffle
 import numpy as np
 
 @pytest.fixture
