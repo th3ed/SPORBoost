@@ -2,6 +2,7 @@ from sporgboost.common import _predict_tree, _grow_tree
 from sporgboost.projections import identity, sparse_random, rotation
 from numba.experimental import jitclass
 from numba.types import DictType, int64, float64, int64
+import numpy as np
 
 dt_spec = [
     ('tree_value', DictType(int64, float64[:,:])),
@@ -16,9 +17,11 @@ class AxisAlignedDecisionTree():
     def __init__(self, max_depth=10):
         self.max_depth = max_depth
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         self.n_classes = y.shape[1]
-        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y, identity, self.max_depth)
+        if sample_weight is None:
+            sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
+        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y, identity, self.max_depth, sample_weight)
 
     def predict(self, X):
         return _predict_tree(self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes)

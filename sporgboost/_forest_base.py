@@ -3,20 +3,24 @@ from numba import njit
 from ._arrays import col_argmax, col_all
 
 @njit(cache=True, fastmath=True)
-def _predict_proba_forest(X, forest, n_classes):
+def _predict_proba_forest(X, forest, n_classes, weights=None):
+    # Init weights if they are None
+    if weights is None:
+        weights = np.full(1 / len(forest), shape=(len(forest)))
+
     # Scoring can be done in parallel in all cases
     out = np.zeros(shape=(X.shape[0], n_classes), dtype='float')
     for idx_tree in range(len(forest)):
-        out += forest[idx_tree].predict(X)
+        out += forest[idx_tree].predict(X) * weights[idx_tree]
 
     # Average prediction from all trees
-    out /= len(forest)
+    out /= weights.sum()
 
     return out
 
 @njit(cache=True, fastmath=True)
-def _predict_forest(X, forest, n_classes):
-    probs = _predict_proba_forest(X, forest, n_classes)
+def _predict_forest(X, forest, n_classes, weights=None):
+    probs = _predict_proba_forest(X, forest, n_classes, weights)
     votes = col_argmax(probs)
     return votes
 

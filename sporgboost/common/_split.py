@@ -4,25 +4,25 @@ from .._arrays import row_cumsum, collapse_levels
 from ._gini import gini_impurity
 
 @njit(cache=True, fastmath=True)
-def best_split(X, y):
-    col_split_gini = find_split(X, y)
+def best_split(X, y, n):
+    col_split_gini = find_split(X, y, n)
     
     # Once all cols have been tested, determine which made the best split
     col_idx = np.argmin(col_split_gini[:,1])
     return (col_idx, col_split_gini[col_idx, 0])
 
 @njit(cache=True, fastmath=True)
-def find_split(X, y):
+def find_split(X, y, n):
     # Evaluate best split among each feature
     # 2d array where rows correspond to each col, 1st col is
     # split value and 2nd is gini
     col_split_gini = np.empty(shape = (X.shape[1], 2))
     for i in range(0, X.shape[1]):
-        col_split_gini[i, :] = _find_split_feat(X[:, i], y)
+        col_split_gini[i, :] = _find_split_feat(X[:, i], y, n)
     return col_split_gini
 
 @njit(cache=True, fastmath=True)
-def _find_split_feat(X, y):
+def _find_split_feat(X, y, n):
     '''Determines where a split should be placed along a 1-d continuous feature col wrt y
     
     Args:
@@ -37,7 +37,7 @@ def _find_split_feat(X, y):
     # along X but also want to force the algorithm splits to consider
     # a split has to include all rows that match the level, not just
     # the one that mins gini
-    X_, y_, n_ = collapse_levels(X, y)
+    X_, y_, n_ = collapse_levels(X, y, n)
 
     # Bail if X_ has only one level
     if X_.shape[0] == 1:
@@ -46,7 +46,7 @@ def _find_split_feat(X, y):
     # Step 2: Compute the prediction for y if we made the split at the given row
     # Note we will remove the last level from these arrays as we can't split
     # inclusively on this and have obs in the right partition
-    n_total = y.shape[0]
+    n_total = n_.sum()
     y_total = y_.sum(axis=0)
     y_asc_cumsum = row_cumsum(y_)[:-1]
     y_desc_cumsum = y_total - y_asc_cumsum

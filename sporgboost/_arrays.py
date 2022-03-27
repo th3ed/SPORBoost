@@ -34,7 +34,7 @@ def row_cumsum(X):
     return out
 
 @njit(cache=True, fastmath=True)
-def row_mean(X):
+def row_mean(X, n=None):
     '''Numba optimized implementation of row-mean
     Args:
         X (Array): The array to mean(axis=0) over
@@ -42,7 +42,11 @@ def row_mean(X):
     Returns:
         An array with the same shape as X with mean(axis=0) values
     '''
-    return X.sum(axis=0) / X.shape[0]
+    if n is None:
+        n = np.full(shape=(X.shape[0], 1), fill_value=1./X.shape[0])
+    
+    return (X * n).sum(axis=0) / n.sum()
+
 
 @njit(cache=True, fastmath=True)
 def row_norm(y):
@@ -99,7 +103,7 @@ def row_nunique(y):
     return out
 
 @njit(cache=True, fastmath=True)
-def collapse_levels(X, y):
+def collapse_levels(X, y, n):
     y_ = {}
     n_ = {}
 
@@ -107,25 +111,27 @@ def collapse_levels(X, y):
     for idx_row in range(X.shape[0]):
         x_row = X[idx_row]
         y_row = y[idx_row, :]
+        n_row = n[idx_row, :]
         if x_row not in y_:
-            y_[x_row] = y_row
-            n_[x_row] = 1
+            n_[x_row] = n_row.copy()
+            y_[x_row] = y_row.copy() * n_row.copy()
         else:
-            y_[x_row] += y_row
-            n_[x_row] += 1
+            n_[x_row] += n_row
+            y_[x_row] += y_row * n_row
 
     # Second pass: convert to arrays and apply sort
     X_ = np.array(list(y_.keys()))
 
-    # For y we need to allocate a new array and fill it
+    # For y and n we need to allocate a new array and fill it
     y2_ = np.empty(shape=(X_.shape[0], y.shape[1]))
+    n2_ = np.empty(shape=(X_.shape[0], 1))
     for idx in range(y2_.shape[0]):
         x = X_[idx]
         y2_[idx, :] = y_[x]
+        n2_[idx, :] = n_[x]
 
-    n_ = np.array(list(n_.values()))
     idx = np.argsort(X_)
-    return X_[idx], y2_[idx, :], n_[idx]
+    return X_[idx], y2_[idx, :], n2_[idx]
 
 @njit(cache=True)
 def choice_replacement_weighted(X, y, D):

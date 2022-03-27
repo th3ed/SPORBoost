@@ -1,10 +1,10 @@
 from sporgboost.common import best_split, gini_impurity
-from .._arrays import row_mean, row_nunique
+from .._arrays import row_mean, row_nunique, row_norm
 import numpy as np
 from numba import njit
 
 @njit(cache=True, fastmath=True)
-def _grow_tree(X, y, proj, max_depth, *args):
+def _grow_tree(X, y, proj, max_depth, sample_weight, *args):
     # Each piece of work contains a pointer to 
     # the node being processed and the index positions
     # of obs at that node
@@ -25,10 +25,12 @@ def _grow_tree(X, y, proj, max_depth, *args):
             # Get node and asociated obs
             node_idx, idx = node_train_idx.popitem()
 
-            X_, y_ = X[idx, :], y[idx, :]
+            X_, y_, n_ = X[idx, :], y[idx, :], sample_weight[idx].reshape((-1, 1))
 
             # Step 1: Check if node is a leaf
-            node_value[node_idx] = row_mean(y_).reshape((1, -1))
+            # The row mean calc doesn't always generate true probs due to a 
+            # loss of precision multiplying and dividing by n, fix that here
+            node_value[node_idx] = row_norm(row_mean(y_, n_).reshape((1, -1)))
 
             # Leaf check 1: at max depth
             if depth == max_depth:
@@ -50,7 +52,7 @@ def _grow_tree(X, y, proj, max_depth, *args):
                 continue
 
             # Evaluate each col and candidate split
-            col, node_split[node_idx] = best_split(X_proj, y_)
+            col, node_split[node_idx] = best_split(X_proj, y_, n_)
             node_proj[node_idx] = np.ascontiguousarray(A[:, col]).reshape((-1, 1))
 
             # Initalize children and add to the next iteration to be processed
