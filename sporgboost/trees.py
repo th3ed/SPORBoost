@@ -36,9 +36,11 @@ class SparseRandomDecisionTree():
         self.s = s
         self.max_depth = max_depth
         
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         self.n_classes = y.shape[1]
-        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y, sparse_random, self.max_depth, self.d, self.s)
+        if sample_weight is None:
+            sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
+        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y, sparse_random, self.max_depth, sample_weight, self.d, self.s)
 
     def predict(self, X):
         return _predict_tree(self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes)
@@ -52,9 +54,11 @@ class RotationalDecisionTree():
         self.K = K
         self.max_depth = max_depth
         
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         self.n_classes = y.shape[1]
-        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y, rotation, self.max_depth, self.K)
+        if sample_weight is None:
+            sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
+        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y, rotation, self.max_depth, sample_weight, self.K)
 
     def predict(self, X):
         return _predict_tree(self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes)
