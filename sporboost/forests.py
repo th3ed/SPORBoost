@@ -4,14 +4,14 @@ from numba.types import uint32, int64, DictType
 from .trees import *
 from ._forest_base import _predict_forest, _predict_proba_forest, _ada_alpha, _ada_eta, _ada_misclassified, _ada_weight_update
 import numpy as np
-from ._arrays import choice_replacement_weighted
 
 @jitclass([
     ('n_trees', uint32),
     ('max_depth', int64),
     ('seed', uint32),
     ('forest', DictType(int64, AxisAlignedDecisionTree.class_type.instance_type)),
-    ('n_classes', uint32)
+    ('n_classes_', int64),
+    ('classes_', int64[:])
 ])
 class RandomForest():
     def __init__(self, n_trees = 500, max_depth = 10, seed = 1234):
@@ -20,7 +20,14 @@ class RandomForest():
         self.seed = seed
 
     def fit(self, X, y):
-        self.n_classes = y.shape[1]
+        if y.ndim == 2:
+            self.n_classes_ = y.shape[1]
+            y_ = y
+        else:
+            self.n_classes_ = np.max(y) + 1
+            y_ = onehot_encode(y, levels = self.n_classes_)
+        self.classes_ = np.arange(self.n_classes_)
+
         # Initalize trees
         forest = {}
 
@@ -30,7 +37,7 @@ class RandomForest():
 
             # Init and train a tree
             forest[idx_forest] = AxisAlignedDecisionTree(self.max_depth)
-            forest[idx_forest].fit(X[idx_rows, :], y[idx_rows,:])
+            forest[idx_forest].fit(X[idx_rows, :], y_[idx_rows,:])
         
         self.forest = forest
 
@@ -40,6 +47,14 @@ class RandomForest():
     def predict_proba(self, X):
         return _predict_proba_forest(X, self.forest, self.n_classes)
 
+    def get_params(self, deep=True):
+        return {'max_depth' : self.max_depth}
+
+    def set_params(self, max_depth = None):
+        if max_depth is not None:
+            self.max_depth = max_depth
+        return self
+
 @jitclass([
     ('d', uint32),
     ('s', float64),
@@ -47,7 +62,8 @@ class RandomForest():
     ('max_depth', int64),
     ('seed', uint32),
     ('forest', DictType(int64, SparseRandomDecisionTree.class_type.instance_type)),
-    ('n_classes', uint32)
+    ('n_classes_', int64),
+    ('classes_', int64[:])
 ])
 class SPORF():
     def __init__(self, d, s, n_trees = 500, max_depth = 10, seed = 1234):
@@ -58,7 +74,14 @@ class SPORF():
         self.seed = seed
 
     def fit(self, X, y):
-        self.n_classes = y.shape[1]
+        if y.ndim == 2:
+            self.n_classes_ = y.shape[1]
+            y_ = y
+        else:
+            self.n_classes_ = np.max(y) + 1
+            y_ = onehot_encode(y, levels = self.n_classes_)
+        self.classes_ = np.arange(self.n_classes_)
+
         # Initalize trees
         forest = {}
 
@@ -68,7 +91,7 @@ class SPORF():
 
             # Init and train a tree
             forest[idx_forest] = SparseRandomDecisionTree(self.d, self.s, self.max_depth)
-            forest[idx_forest].fit(X[idx_rows, :], y[idx_rows,:])
+            forest[idx_forest].fit(X[idx_rows, :], y_[idx_rows,:])
         
         self.forest = forest
 
@@ -78,13 +101,26 @@ class SPORF():
     def predict_proba(self, X):
         return _predict_proba_forest(X, self.forest, self.n_classes)
 
+    def get_params(self, deep=True):
+        return {'max_depth' : self.max_depth, 'd' : self.d, 's' : self.s}
+
+    def set_params(self, max_depth = None, s = None, d = None):
+        if max_depth is not None:
+            self.max_depth = max_depth
+        if s is not None:
+            self.s = s
+        if d is not None:
+            self.d = d
+        return self
+
 @jitclass([
     ('K', int64),
     ('n_trees', uint32),
     ('max_depth', int64),
     ('seed', uint32),
     ('forest', DictType(int64, RotationalDecisionTree.class_type.instance_type)),
-    ('n_classes', uint32)
+    ('n_classes_', int64),
+    ('classes_', int64[:])
 ])
 class RotationalForest():
     def __init__(self, K, n_trees = 500, max_depth = 10, seed = 1234):
@@ -94,7 +130,14 @@ class RotationalForest():
         self.seed = seed
 
     def fit(self, X, y):
-        self.n_classes = y.shape[1]
+        if y.ndim == 2:
+            self.n_classes_ = y.shape[1]
+            y_ = y
+        else:
+            self.n_classes_ = np.max(y) + 1
+            y_ = onehot_encode(y, levels = self.n_classes_)
+        self.classes_ = np.arange(self.n_classes_)
+
         # Initalize trees
         forest = {}
 
@@ -104,7 +147,7 @@ class RotationalForest():
 
             # Init and train a tree
             forest[idx_forest] = RotationalDecisionTree(self.K, self.max_depth)
-            forest[idx_forest].fit(X[idx_rows, :], y[idx_rows,:])
+            forest[idx_forest].fit(X[idx_rows, :], y_[idx_rows,:])
         
         self.forest = forest
 
@@ -114,12 +157,23 @@ class RotationalForest():
     def predict_proba(self, X):
         return _predict_proba_forest(X, self.forest, self.n_classes)
 
+    def get_params(self, deep=True):
+        return {'max_depth' : self.max_depth, 'K' : self.K}
+
+    def set_params(self, max_depth = None, K = None):
+        if max_depth is not None:
+            self.max_depth = max_depth
+        if K is not None:
+            self.K = K
+        return self
+
 @jitclass([
     ('n_trees', uint32),
     ('max_depth', int64),
     ('seed', uint32),
     ('forest', DictType(int64, AxisAlignedDecisionTree.class_type.instance_type)),
-    ('n_classes', uint32),
+    ('n_classes_', int64),
+    ('classes_', int64[:]),
     ('alpha', float64[:])
 ])
 class AdaBoost():
@@ -129,7 +183,13 @@ class AdaBoost():
         self.seed = seed
 
     def fit(self, X, y):
-        self.n_classes = y.shape[1]
+        if y.ndim == 2:
+            self.n_classes_ = y.shape[1]
+            y_ = y
+        else:
+            self.n_classes_ = np.max(y) + 1
+            y_ = onehot_encode(y, levels = self.n_classes_)
+        self.classes_ = np.arange(self.n_classes_)
 
         # Initalize trees
         forest = {}
@@ -144,13 +204,13 @@ class AdaBoost():
             # Init and train a tree
             # Use weighted obs for training boosted trees
             forest[idx_forest] = AxisAlignedDecisionTree(self.max_depth)
-            forest[idx_forest].fit(X, y, D)
+            forest[idx_forest].fit(X, y_, D)
 
             # Update weights based on forest errors
             y_pred = forest[idx_forest].predict(X)
 
             # Perform a weight update
-            miss = _ada_misclassified(y, y_pred)
+            miss = _ada_misclassified(y_, y_pred)
             eta = _ada_eta(miss, D)
 
             # Discard rules
@@ -163,18 +223,26 @@ class AdaBoost():
                 break
             
             # Tree is valid, we can update weights
-            alpha[idx_forest] = _ada_alpha(eta, self.n_classes)
-            D = _ada_weight_update(y, y_pred, D, eta, miss, self.n_classes)
+            alpha[idx_forest] = _ada_alpha(eta, self.n_classes_)
+            D = _ada_weight_update(y, y_pred, D, eta, miss, self.n_classes_)
 
         if self.n_trees > 0:
             self.forest = forest
             self.alpha = np.array(list(alpha.values()))
 
     def predict(self, X):
-        return _predict_forest(X, self.forest, self.n_classes, weights=self.alpha)
+        return _predict_forest(X, self.forest, self.n_classes_, weights=self.alpha)
 
     def predict_proba(self, X):
-        return _predict_proba_forest(X, self.forest, self.n_classes, weights=self.alpha)
+        return _predict_proba_forest(X, self.forest, self.n_classes_, weights=self.alpha)
+
+    def get_params(self, deep=True):
+        return {'max_depth' : self.max_depth}
+
+    def set_params(self, max_depth = None):
+        if max_depth is not None:
+            self.max_depth = max_depth
+        return self
 
 @jitclass([
     ('d', int64),
@@ -183,7 +251,8 @@ class AdaBoost():
     ('max_depth', int64),
     ('seed', uint32),
     ('forest', DictType(int64, SparseRandomDecisionTree.class_type.instance_type)),
-    ('n_classes', uint32),
+    ('n_classes_', int64),
+    ('classes_', int64[:]),
     ('alpha', float64[:])
 ])
 class SPORBoost():
@@ -195,7 +264,13 @@ class SPORBoost():
         self.d = d
 
     def fit(self, X, y):
-        self.n_classes = y.shape[1]
+        if y.ndim == 2:
+            self.n_classes_ = y.shape[1]
+            y_ = y
+        else:
+            self.n_classes_ = np.max(y) + 1
+            y_ = onehot_encode(y, levels = self.n_classes_)
+        self.classes_ = np.arange(self.n_classes_)
 
         # Initalize trees
         forest = {}
@@ -210,13 +285,13 @@ class SPORBoost():
             # Init and train a tree
             # Use weighted obs for training boosted trees
             forest[idx_forest] = SparseRandomDecisionTree(self.d, self.s, self.max_depth)
-            forest[idx_forest].fit(X, y, D)
+            forest[idx_forest].fit(X, y_, D)
 
             # Update weights based on forest errors
             y_pred = forest[idx_forest].predict(X)
 
             # Perform a weight update
-            miss = _ada_misclassified(y, y_pred)
+            miss = _ada_misclassified(y_, y_pred)
             eta = _ada_eta(miss, D)
             
             # Discard rules
@@ -229,18 +304,30 @@ class SPORBoost():
                 break
             
             # Tree is valid, we can update weights
-            alpha[idx_forest] = _ada_alpha(eta, self.n_classes)
-            D = _ada_weight_update(y, y_pred, D, eta, miss, self.n_classes)
+            alpha[idx_forest] = _ada_alpha(eta, self.n_classes_)
+            D = _ada_weight_update(y, y_pred, D, eta, miss, self.n_classes_)
 
         if self.n_trees > 0:
             self.forest = forest
             self.alpha = np.array(list(alpha.values()))
 
     def predict(self, X):
-        return _predict_forest(X, self.forest, self.n_classes, weights=self.alpha)
+        return _predict_forest(X, self.forest, self.n_classes_, weights=self.alpha)
 
     def predict_proba(self, X):
-        return _predict_proba_forest(X, self.forest, self.n_classes, weights=self.alpha)
+        return _predict_proba_forest(X, self.forest, self.n_classes_, weights=self.alpha)
+
+    def get_params(self, deep=True):
+        return {'max_depth' : self.max_depth, 'd' : self.d, 's' : self.s}
+
+    def set_params(self, max_depth = None, s = None, d = None):
+        if max_depth is not None:
+            self.max_depth = max_depth
+        if s is not None:
+            self.s = s
+        if d is not None:
+            self.d = d
+        return self
 
 @jitclass([
     ('K', int64),
@@ -248,7 +335,8 @@ class SPORBoost():
     ('max_depth', int64),
     ('seed', uint32),
     ('forest', DictType(int64, RotationalDecisionTree.class_type.instance_type)),
-    ('n_classes', uint32),
+    ('n_classes_', int64),
+    ('classes_', int64[:]),
     ('alpha', float64[:])
 ])
 class RotBoost():
@@ -259,7 +347,13 @@ class RotBoost():
         self.K = K
 
     def fit(self, X, y):
-        self.n_classes = y.shape[1]
+        if y.ndim == 2:
+            self.n_classes_ = y.shape[1]
+            y_ = y
+        else:
+            self.n_classes_ = np.max(y) + 1
+            y_ = onehot_encode(y, levels = self.n_classes_)
+        self.classes_ = np.arange(self.n_classes_)
 
         # Initalize trees
         forest = {}
@@ -274,13 +368,13 @@ class RotBoost():
             # Init and train a tree
             # Use weighted obs for training boosted trees
             forest[idx_forest] = RotationalDecisionTree(self.K, self.max_depth)
-            forest[idx_forest].fit(X, y, D)
+            forest[idx_forest].fit(X, y_, D)
 
             # Update weights based on forest errors
             y_pred = forest[idx_forest].predict(X)
 
             # Perform a weight update
-            miss = _ada_misclassified(y, y_pred)
+            miss = _ada_misclassified(y_, y_pred)
             eta = _ada_eta(miss, D)
             
             # Discard rules
@@ -293,40 +387,25 @@ class RotBoost():
                 break
             
             # Tree is valid, we can update weights
-            alpha[idx_forest] = _ada_alpha(eta, self.n_classes)
-            D = _ada_weight_update(y, y_pred, D, eta, miss, self.n_classes)
+            alpha[idx_forest] = _ada_alpha(eta, self.n_classes_)
+            D = _ada_weight_update(y, y_pred, D, eta, miss, self.n_classes_)
 
         if self.n_trees > 0:
             self.forest = forest
             self.alpha = np.array(list(alpha.values()))
 
     def predict(self, X):
-        return _predict_forest(X, self.forest, self.n_classes, weights=self.alpha)
+        return _predict_forest(X, self.forest, self.n_classes_, weights=self.alpha)
 
     def predict_proba(self, X):
-        return _predict_proba_forest(X, self.forest, self.n_classes, weights=self.alpha)
+        return _predict_proba_forest(X, self.forest, self.n_classes_, weights=self.alpha)
 
-# class AdaBoost(BaseAdaBoost):
-#     def __init__(self, n_trees = 500, max_depth = 1, seed = 1234):
-#         self.base_classifer = AxisAlignedDecisionTree
-#         super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed)
+    def get_params(self, deep=True):
+        return {'max_depth' : self.max_depth, 'K' : self.K}
 
-# class SPORF(BaseRandomForest):
-#     def __init__(self, d, s, n_trees = 500, max_depth = None, seed = 1234, **kwargs):
-#         self.base_classifer = SparseRandomDecisionTree
-#         super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, d=d, s=s)
-
-# class SPORGBoost(BaseAdaBoost):
-#     def __init__(self, d, s, n_trees = 500, max_depth = None, seed = 1234):
-#         self.base_classifer = SparseRandomDecisionTree
-#         super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, d=d, s=s)
-
-# class RotationalRandomForest(BaseRandomForest):
-#     def __init__(self, K, n_trees = 500, max_depth = None, seed = 1234):
-#         self.base_classifer = RotationalDecisionTree
-#         super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, K=K)
-
-# class RotBoost(BaseAdaBoost):
-#     def __init__(self, K, n_trees = 500, max_depth = None, seed = 1234):
-#         self.base_classifer = RotationalDecisionTree
-#         super().__init__(n_trees = n_trees, max_depth = max_depth, seed = seed, K=K)
+    def set_params(self, max_depth = None, K = None):
+        if max_depth is not None:
+            self.max_depth = max_depth
+        if K is not None:
+            self.K = K
+        return self
