@@ -13,3 +13,17 @@ def onehot_encode(y, levels = 0):
     '''
     y_levels = levels if levels > 0 else np.max(y) + 1
     return(np.eye(y_levels)[y])
+
+@njit(cache=True, fastmath=True)
+def shuffle(X, y):
+    '''Shuffle both X and y vectors in unison
+    
+    Args:
+        X (Array): X array to shuffle
+        y (Array): y array to shuffle
+    
+    Returns:
+        X, y arrays, shuffled
+    '''
+    idx = np.random.permutation(y.shape[0])
+    return(X[idx], y[idx])

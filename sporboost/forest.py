@@ -1,7 +1,7 @@
 from re import S
 from numba.experimental import jitclass
 from numba.types import uint32, int64, DictType
-from .trees import *
+from .tree import *
 from ._forest_base import _predict_forest, _predict_proba_forest, _ada_alpha, _ada_eta, _ada_misclassified, _ada_weight_update
 import numpy as np
 
@@ -42,10 +42,10 @@ class RandomForest():
         self.forest = forest
 
     def predict(self, X):
-        return _predict_forest(X, self.forest, self.n_classes)
+        return _predict_forest(X, self.forest, self.n_classes_)
 
     def predict_proba(self, X):
-        return _predict_proba_forest(X, self.forest, self.n_classes)
+        return _predict_proba_forest(X, self.forest, self.n_classes_)
 
     def get_params(self, deep=True):
         return {'max_depth' : self.max_depth}
@@ -96,10 +96,10 @@ class SPORF():
         self.forest = forest
 
     def predict(self, X):
-        return _predict_forest(X, self.forest, self.n_classes)
+        return _predict_forest(X, self.forest, self.n_classes_)
 
     def predict_proba(self, X):
-        return _predict_proba_forest(X, self.forest, self.n_classes)
+        return _predict_proba_forest(X, self.forest, self.n_classes_)
 
     def get_params(self, deep=True):
         return {'max_depth' : self.max_depth, 'd' : self.d, 's' : self.s}
@@ -152,10 +152,10 @@ class RotationalForest():
         self.forest = forest
 
     def predict(self, X):
-        return _predict_forest(X, self.forest, self.n_classes)
+        return _predict_forest(X, self.forest, self.n_classes_)
 
     def predict_proba(self, X):
-        return _predict_proba_forest(X, self.forest, self.n_classes)
+        return _predict_proba_forest(X, self.forest, self.n_classes_)
 
     def get_params(self, deep=True):
         return {'max_depth' : self.max_depth, 'K' : self.K}

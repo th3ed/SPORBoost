@@ -4,7 +4,7 @@ os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 import pytest
 import sklearn.datasets
-from sporboost.common import gini_impurity
+from sporboost._tree_base import gini_impurity
 from sporboost.preprocessing import onehot_encode
 import numpy as np
 

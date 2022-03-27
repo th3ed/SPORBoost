@@ -1,4 +1,4 @@
-from .common import _predict_tree, _predict_proba_tree, _grow_tree
+from ._tree_base import _predict_tree, _predict_proba_tree, _grow_tree
 from .projections import identity, sparse_random, rotation
 from .preprocessing import onehot_encode
 from numba.experimental import jitclass

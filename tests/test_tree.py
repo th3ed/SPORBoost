@@ -5,7 +5,7 @@ os.environ['NUMBA_DISABLE_JIT'] = '1'
 import pytest
 import sklearn.datasets
 from sporboost.preprocessing import onehot_encode, shuffle
-from sporboost.trees import *
+from sporboost.tree import *
 from sklearn.tree import DecisionTreeClassifier
 import numpy as np
 
