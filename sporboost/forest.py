@@ -1,18 +1,20 @@
 from re import S
 from numba.experimental import jitclass
 from numba.types import uint32, int64, DictType
+from sklearn.metrics import cohen_kappa_score
 from .tree import *
 from ._forest_base import _predict_forest, _predict_proba_forest, _ada_alpha, _ada_eta, _ada_misclassified, _ada_weight_update
 import numpy as np
+from sklearn.metrics import cohen_kappa_score
 
-@jitclass([
-    ('n_trees', uint32),
-    ('max_depth', int64),
-    ('seed', uint32),
-    ('forest', DictType(int64, AxisAlignedDecisionTree.class_type.instance_type)),
-    ('n_classes_', int64),
-    ('classes_', int64[:])
-])
+# @jitclass([
+#     ('n_trees', uint32),
+#     ('max_depth', int64),
+#     ('seed', uint32),
+#     ('forest', DictType(int64, AxisAlignedDecisionTree.class_type.instance_type)),
+#     ('n_classes_', int64),
+#     ('classes_', int64[:])
+# ])
 class RandomForest():
     def __init__(self, n_trees = 500, max_depth = 10, seed = 1234):
         self.n_trees = n_trees
@@ -42,10 +44,14 @@ class RandomForest():
         self.forest = forest
 
     def predict(self, X):
-        return _predict_forest(X, self.forest, self.n_classes_)
+        return np.argmax(_predict_forest(X, self.forest, self.n_classes_), axis=1)
 
     def predict_proba(self, X):
         return _predict_proba_forest(X, self.forest, self.n_classes_)
+
+    def score(self, X, y):
+        pred = self.predict(X)
+        return cohen_kappa_score(pred, y)
 
     def get_params(self, deep=True):
         return {'max_depth' : self.max_depth}
@@ -55,18 +61,18 @@ class RandomForest():
             self.max_depth = max_depth
         return self
 
-@jitclass([
-    ('d', uint32),
-    ('s', float64),
-    ('n_trees', uint32),
-    ('max_depth', int64),
-    ('seed', uint32),
-    ('forest', DictType(int64, SparseRandomDecisionTree.class_type.instance_type)),
-    ('n_classes_', int64),
-    ('classes_', int64[:])
-])
+# @jitclass([
+#     ('d', uint32),
+#     ('s', float64),
+#     ('n_trees', uint32),
+#     ('max_depth', int64),
+#     ('seed', uint32),
+#     ('forest', DictType(int64, SparseRandomDecisionTree.class_type.instance_type)),
+#     ('n_classes_', int64),
+#     ('classes_', int64[:])
+# ])
 class SPORF():
-    def __init__(self, d, s, n_trees = 500, max_depth = 10, seed = 1234):
+    def __init__(self, d=1, s=3, n_trees = 500, max_depth = 10, seed = 1234):
         self.d = d
         self.s = s
         self.n_trees = n_trees
@@ -96,10 +102,14 @@ class SPORF():
         self.forest = forest
 
     def predict(self, X):
-        return _predict_forest(X, self.forest, self.n_classes_)
+        return np.argmax(_predict_forest(X, self.forest, self.n_classes_), axis=1)
 
     def predict_proba(self, X):
         return _predict_proba_forest(X, self.forest, self.n_classes_)
+
+    def score(self, X, y):
+        pred = self.predict(X)
+        return cohen_kappa_score(pred, y)
 
     def get_params(self, deep=True):
         return {'max_depth' : self.max_depth, 'd' : self.d, 's' : self.s}
@@ -113,17 +123,17 @@ class SPORF():
             self.d = d
         return self
 
-@jitclass([
-    ('K', int64),
-    ('n_trees', uint32),
-    ('max_depth', int64),
-    ('seed', uint32),
-    ('forest', DictType(int64, RotationalDecisionTree.class_type.instance_type)),
-    ('n_classes_', int64),
-    ('classes_', int64[:])
-])
+# @jitclass([
+#     ('K', int64),
+#     ('n_trees', uint32),
+#     ('max_depth', int64),
+#     ('seed', uint32),
+#     ('forest', DictType(int64, RotationalDecisionTree.class_type.instance_type)),
+#     ('n_classes_', int64),
+#     ('classes_', int64[:])
+# ])
 class RotationalForest():
-    def __init__(self, K, n_trees = 500, max_depth = 10, seed = 1234):
+    def __init__(self, K=1, n_trees = 500, max_depth = 10, seed = 1234):
         self.K = K
         self.n_trees = n_trees
         self.max_depth = max_depth
@@ -152,10 +162,14 @@ class RotationalForest():
         self.forest = forest
 
     def predict(self, X):
-        return _predict_forest(X, self.forest, self.n_classes_)
+        return np.argmax(_predict_forest(X, self.forest, self.n_classes_), axis=1)
 
     def predict_proba(self, X):
         return _predict_proba_forest(X, self.forest, self.n_classes_)
+
+    def score(self, X, y):
+        pred = self.predict(X)
+        return cohen_kappa_score(pred, y)
 
     def get_params(self, deep=True):
         return {'max_depth' : self.max_depth, 'K' : self.K}
@@ -167,15 +181,15 @@ class RotationalForest():
             self.K = K
         return self
 
-@jitclass([
-    ('n_trees', uint32),
-    ('max_depth', int64),
-    ('seed', uint32),
-    ('forest', DictType(int64, AxisAlignedDecisionTree.class_type.instance_type)),
-    ('n_classes_', int64),
-    ('classes_', int64[:]),
-    ('alpha', float64[:])
-])
+# @jitclass([
+#     ('n_trees', uint32),
+#     ('max_depth', int64),
+#     ('seed', uint32),
+#     ('forest', DictType(int64, AxisAlignedDecisionTree.class_type.instance_type)),
+#     ('n_classes_', int64),
+#     ('classes_', int64[:]),
+#     ('alpha', float64[:])
+# ])
 class AdaBoost():
     def __init__(self, n_trees = 500, max_depth = 1, seed = 1234):
         self.n_trees = n_trees
@@ -217,7 +231,7 @@ class AdaBoost():
             # https://github.com/scikit-learn/scikit-learn/blob/37ac6788
             # c9504ee409b75e5e24ff7d86c90c2ffb/sklearn/ensemble/
             # _weight_boosting.py#L637
-            if (eta <= 0.) or (eta >= 1. - (1.0 / y.shape[1])):
+            if (eta <= 0.) or (eta >= 1. - (1.0 / self.n_classes_)):
                 # Tree is worse than random, break loop and return forest
                 self.n_trees = idx_forest
                 break
@@ -231,10 +245,14 @@ class AdaBoost():
             self.alpha = np.array(list(alpha.values()))
 
     def predict(self, X):
-        return _predict_forest(X, self.forest, self.n_classes_, weights=self.alpha)
+        return np.argmax(_predict_forest(X, self.forest, self.n_classes_), axis=1)
 
     def predict_proba(self, X):
         return _predict_proba_forest(X, self.forest, self.n_classes_, weights=self.alpha)
+
+    def score(self, X, y):
+        pred = self.predict(X)
+        return cohen_kappa_score(pred, y)
 
     def get_params(self, deep=True):
         return {'max_depth' : self.max_depth}
@@ -244,19 +262,19 @@ class AdaBoost():
             self.max_depth = max_depth
         return self
 
-@jitclass([
-    ('d', int64),
-    ('s', float64),
-    ('n_trees', uint32),
-    ('max_depth', int64),
-    ('seed', uint32),
-    ('forest', DictType(int64, SparseRandomDecisionTree.class_type.instance_type)),
-    ('n_classes_', int64),
-    ('classes_', int64[:]),
-    ('alpha', float64[:])
-])
+# @jitclass([
+#     ('d', int64),
+#     ('s', float64),
+#     ('n_trees', uint32),
+#     ('max_depth', int64),
+#     ('seed', uint32),
+#     ('forest', DictType(int64, SparseRandomDecisionTree.class_type.instance_type)),
+#     ('n_classes_', int64),
+#     ('classes_', int64[:]),
+#     ('alpha', float64[:])
+# ])
 class SPORBoost():
-    def __init__(self, d, s, n_trees = 500, max_depth = 1, seed = 1234):
+    def __init__(self, d=1, s=3, n_trees = 500, max_depth = 1, seed = 1234):
         self.n_trees = n_trees
         self.max_depth = max_depth
         self.seed = seed
@@ -298,7 +316,7 @@ class SPORBoost():
             # https://github.com/scikit-learn/scikit-learn/blob/37ac6788
             # c9504ee409b75e5e24ff7d86c90c2ffb/sklearn/ensemble/
             # _weight_boosting.py#L637
-            if (eta <= 0.) or (eta >= 1. - (1.0 / y.shape[1])):
+            if (eta <= 0.) or (eta >= 1. - (1.0 / self.n_classes_)):
                 # Tree is worse than random, break loop and return forest
                 self.n_trees = idx_forest
                 break
@@ -312,10 +330,14 @@ class SPORBoost():
             self.alpha = np.array(list(alpha.values()))
 
     def predict(self, X):
-        return _predict_forest(X, self.forest, self.n_classes_, weights=self.alpha)
+        return np.argmax(_predict_forest(X, self.forest, self.n_classes_), axis=1)
 
     def predict_proba(self, X):
         return _predict_proba_forest(X, self.forest, self.n_classes_, weights=self.alpha)
+
+    def score(self, X, y):
+        pred = self.predict(X)
+        return cohen_kappa_score(pred, y)
 
     def get_params(self, deep=True):
         return {'max_depth' : self.max_depth, 'd' : self.d, 's' : self.s}
@@ -329,18 +351,18 @@ class SPORBoost():
             self.d = d
         return self
 
-@jitclass([
-    ('K', int64),
-    ('n_trees', uint32),
-    ('max_depth', int64),
-    ('seed', uint32),
-    ('forest', DictType(int64, RotationalDecisionTree.class_type.instance_type)),
-    ('n_classes_', int64),
-    ('classes_', int64[:]),
-    ('alpha', float64[:])
-])
+# @jitclass([
+#     ('K', int64),
+#     ('n_trees', uint32),
+#     ('max_depth', int64),
+#     ('seed', uint32),
+#     ('forest', DictType(int64, RotationalDecisionTree.class_type.instance_type)),
+#     ('n_classes_', int64),
+#     ('classes_', int64[:]),
+#     ('alpha', float64[:])
+# ])
 class RotBoost():
-    def __init__(self, K, n_trees = 500, max_depth = 1, seed = 1234):
+    def __init__(self, K=1, n_trees = 500, max_depth = 1, seed = 1234):
         self.n_trees = n_trees
         self.max_depth = max_depth
         self.seed = seed
@@ -381,7 +403,7 @@ class RotBoost():
             # https://github.com/scikit-learn/scikit-learn/blob/37ac6788
             # c9504ee409b75e5e24ff7d86c90c2ffb/sklearn/ensemble/
             # _weight_boosting.py#L637
-            if (eta <= 0.) or (eta >= 1. - (1.0 / y.shape[1])):
+            if (eta <= 0.) or (eta >= 1. - (1.0 / self.n_classes_)):
                 # Tree is worse than random, break loop and return forest
                 self.n_trees = idx_forest
                 break
@@ -395,10 +417,14 @@ class RotBoost():
             self.alpha = np.array(list(alpha.values()))
 
     def predict(self, X):
-        return _predict_forest(X, self.forest, self.n_classes_, weights=self.alpha)
+        return np.argmax(_predict_forest(X, self.forest, self.n_classes_), axis=1)
 
     def predict_proba(self, X):
         return _predict_proba_forest(X, self.forest, self.n_classes_, weights=self.alpha)
+
+    def score(self, X, y):
+        pred = self.predict(X)
+        return cohen_kappa_score(pred, y)
 
     def get_params(self, deep=True):
         return {'max_depth' : self.max_depth, 'K' : self.K}

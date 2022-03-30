@@ -2,7 +2,7 @@ import numpy as np
 from numba import njit
 from ._arrays import col_argmax, col_all
 
-@njit(cache=True, fastmath=True)
+# @njit(cache=True, fastmath=True)
 def _predict_proba_forest(X, forest, n_classes, weights=None):
     # Init weights if they are None
     if weights is None:
@@ -18,7 +18,7 @@ def _predict_proba_forest(X, forest, n_classes, weights=None):
 
     return out
 
-@njit(cache=True, fastmath=True)
+# @njit(cache=True, fastmath=True)
 def _predict_forest(X, forest, n_classes, weights=None):
     probs = _predict_proba_forest(X, forest, n_classes, weights)
     votes = col_argmax(probs)
