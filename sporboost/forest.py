@@ -72,8 +72,8 @@ class RandomForest():
 #     ('classes_', int64[:])
 # ])
 class SPORF():
-    def __init__(self, d=1, s=3, n_trees = 500, max_depth = 10, seed = 1234):
-        self.d = d
+    def __init__(self, d_ratio=1., s=3, n_trees = 500, max_depth = 10, seed = 1234):
+        self.d_ratio = d_ratio
         self.s = s
         self.n_trees = n_trees
         self.max_depth = max_depth
@@ -96,7 +96,7 @@ class SPORF():
             idx_rows = np.random.choice(np.arange(X.shape[0]), size=(X.shape[0]), replace=True)
 
             # Init and train a tree
-            forest[idx_forest] = SparseRandomDecisionTree(self.d, self.s, self.max_depth)
+            forest[idx_forest] = SparseRandomDecisionTree(self.d_ratio, self.s, self.max_depth)
             forest[idx_forest].fit(X[idx_rows, :], y_[idx_rows,:])
         
         self.forest = forest
@@ -112,15 +112,15 @@ class SPORF():
         return cohen_kappa_score(pred, y)
 
     def get_params(self, deep=True):
-        return {'max_depth' : self.max_depth, 'd' : self.d, 's' : self.s}
+        return {'max_depth' : self.max_depth, 'd_ratio' : self.d_ratio, 's' : self.s}
 
-    def set_params(self, max_depth = None, s = None, d = None):
+    def set_params(self, max_depth = None, s = None, d_ratio = None):
         if max_depth is not None:
             self.max_depth = max_depth
         if s is not None:
             self.s = s
-        if d is not None:
-            self.d = d
+        if d_ratio is not None:
+            self.d_ratio = d_ratio
         return self
 
 # @jitclass([
@@ -274,12 +274,12 @@ class AdaBoost():
 #     ('alpha', float64[:])
 # ])
 class SPORBoost():
-    def __init__(self, d=1, s=3, n_trees = 500, max_depth = 1, seed = 1234):
+    def __init__(self, d_ratio=1., s=3, n_trees = 500, max_depth = 1, seed = 1234):
         self.n_trees = n_trees
         self.max_depth = max_depth
         self.seed = seed
         self.s = s
-        self.d = d
+        self.d_ratio = d_ratio
 
     def fit(self, X, y):
         if y.ndim == 2:
@@ -302,7 +302,7 @@ class SPORBoost():
 
             # Init and train a tree
             # Use weighted obs for training boosted trees
-            forest[idx_forest] = SparseRandomDecisionTree(self.d, self.s, self.max_depth)
+            forest[idx_forest] = SparseRandomDecisionTree(self.d_ratio, self.s, self.max_depth)
             forest[idx_forest].fit(X, y_, D)
 
             # Update weights based on forest errors
@@ -340,15 +340,15 @@ class SPORBoost():
         return cohen_kappa_score(pred, y)
 
     def get_params(self, deep=True):
-        return {'max_depth' : self.max_depth, 'd' : self.d, 's' : self.s}
+        return {'max_depth' : self.max_depth, 'd_ratio' : self.d_ratio, 's' : self.s}
 
-    def set_params(self, max_depth = None, s = None, d = None):
+    def set_params(self, max_depth = None, s = None, d_ratio = None):
         if max_depth is not None:
             self.max_depth = max_depth
         if s is not None:
             self.s = s
-        if d is not None:
-            self.d = d
+        if d_ratio is not None:
+            self.d_ratio = d_ratio
         return self
 
 # @jitclass([
