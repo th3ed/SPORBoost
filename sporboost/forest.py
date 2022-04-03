@@ -1,20 +1,10 @@
-from re import S
-from numba.experimental import jitclass
-from numba.types import uint32, int64, DictType
 from sklearn.metrics import cohen_kappa_score
 from .tree import *
-from ._forest_base import _predict_forest, _predict_proba_forest, _ada_alpha, _ada_eta, _ada_misclassified, _ada_weight_update
+from ._forest_base import _predict_forest, _predict_proba_forest, _ada_alpha, \
+_ada_eta, _ada_misclassified, _ada_weight_update
 import numpy as np
 from sklearn.metrics import cohen_kappa_score
 
-# @jitclass([
-#     ('n_trees', uint32),
-#     ('max_depth', int64),
-#     ('seed', uint32),
-#     ('forest', DictType(int64, AxisAlignedDecisionTree.class_type.instance_type)),
-#     ('n_classes_', int64),
-#     ('classes_', int64[:])
-# ])
 class RandomForest():
     def __init__(self, n_trees = 500, max_depth = 10, seed = 1234):
         self.n_trees = n_trees
@@ -61,16 +51,6 @@ class RandomForest():
             self.max_depth = max_depth
         return self
 
-# @jitclass([
-#     ('d', uint32),
-#     ('s', float64),
-#     ('n_trees', uint32),
-#     ('max_depth', int64),
-#     ('seed', uint32),
-#     ('forest', DictType(int64, SparseRandomDecisionTree.class_type.instance_type)),
-#     ('n_classes_', int64),
-#     ('classes_', int64[:])
-# ])
 class SPORF():
     def __init__(self, d_ratio=1., s=3, n_trees = 500, max_depth = 10, seed = 1234):
         self.d_ratio = d_ratio
@@ -123,15 +103,6 @@ class SPORF():
             self.d_ratio = d_ratio
         return self
 
-# @jitclass([
-#     ('K', int64),
-#     ('n_trees', uint32),
-#     ('max_depth', int64),
-#     ('seed', uint32),
-#     ('forest', DictType(int64, RotationalDecisionTree.class_type.instance_type)),
-#     ('n_classes_', int64),
-#     ('classes_', int64[:])
-# ])
 class RotationalForest():
     def __init__(self, K=1, n_trees = 500, max_depth = 10, seed = 1234):
         self.K = K
@@ -181,15 +152,6 @@ class RotationalForest():
             self.K = K
         return self
 
-# @jitclass([
-#     ('n_trees', uint32),
-#     ('max_depth', int64),
-#     ('seed', uint32),
-#     ('forest', DictType(int64, AxisAlignedDecisionTree.class_type.instance_type)),
-#     ('n_classes_', int64),
-#     ('classes_', int64[:]),
-#     ('alpha', float64[:])
-# ])
 class AdaBoost():
     def __init__(self, n_trees = 500, max_depth = 1, seed = 1234):
         self.n_trees = n_trees
@@ -262,17 +224,6 @@ class AdaBoost():
             self.max_depth = max_depth
         return self
 
-# @jitclass([
-#     ('d', int64),
-#     ('s', float64),
-#     ('n_trees', uint32),
-#     ('max_depth', int64),
-#     ('seed', uint32),
-#     ('forest', DictType(int64, SparseRandomDecisionTree.class_type.instance_type)),
-#     ('n_classes_', int64),
-#     ('classes_', int64[:]),
-#     ('alpha', float64[:])
-# ])
 class SPORBoost():
     def __init__(self, d_ratio=1., s=3, n_trees = 500, max_depth = 1, seed = 1234):
         self.n_trees = n_trees
@@ -351,16 +302,6 @@ class SPORBoost():
             self.d_ratio = d_ratio
         return self
 
-# @jitclass([
-#     ('K', int64),
-#     ('n_trees', uint32),
-#     ('max_depth', int64),
-#     ('seed', uint32),
-#     ('forest', DictType(int64, RotationalDecisionTree.class_type.instance_type)),
-#     ('n_classes_', int64),
-#     ('classes_', int64[:]),
-#     ('alpha', float64[:])
-# ])
 class RotBoost():
     def __init__(self, K=1, n_trees = 500, max_depth = 1, seed = 1234):
         self.n_trees = n_trees
