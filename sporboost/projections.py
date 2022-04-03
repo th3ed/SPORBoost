@@ -1,3 +1,4 @@
+from random import sample
 from numba import njit
 import numpy as np
 import numpy as np
@@ -5,11 +6,11 @@ from numba import njit
 from ._arrays import row_mean, col_all, row_argmax
 
 @njit(cache=True, fastmath=True)
-def identity(X):
+def identity(X, sample_weight=None):
     return np.eye(X.shape[1])
 
 @njit(cache=True, fastmath=True)
-def sparse_random(X, d, s):
+def sparse_random(X, d, s, sample_weight=None):
     p = X.shape[1]
 
     thresh = 1 / (2 * s)
@@ -28,14 +29,32 @@ def sparse_random(X, d, s):
     return out
 
 @njit(cache=True, fastmath=True)
-def pca(X):
+def pca(X, sample_weight = None):
+    # Set equal weights if they are none
+    if sample_weight is None:
+        sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
+    else:
+        # Make sure weights are normalized
+        sample_weight /= sample_weight.sum()
+
+    sample_weight = np.diag(sample_weight)
+
+    # output array
     out = np.zeros(shape=(X.shape[1], X.shape[1]))
 
     # Step 1: Center data
-    X_ = X - row_mean(X)
+    X_ = X - row_mean(X, sample_weight)
+
+    # Adjustment for weights
+    # https://rdrr.io/github/mengchen18/mogsa/src/R/wsvd.R
+    X_ = np.linalg.matrix_power(sample_weight, 1/2) @ X
 
     # Get SVD decomposition for eigenvalues/vectors
     U, _, V = np.linalg.svd(X_, full_matrices=False)
+
+    # Adjustment for weights
+    # https://rdrr.io/github/mengchen18/mogsa/src/R/wsvd.R
+    U = np.linalg.matrix_power(sample_weight, -1/2) @ U
 
     # SVD flip method
     max_abs_cols = row_argmax(np.abs(U)).astype(np.int64).flatten()
@@ -51,7 +70,14 @@ def pca(X):
     return out
 
 @njit(cache=True, fastmath=True)
-def rotation(X, K):
+def rotation(X, K, sample_weight=None):
+    # Set equal weights if they are none
+    if sample_weight is None:
+        sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
+    else:
+        # Make sure weights are normalized
+        sample_weight /= sample_weight.sum()
+    
     idx = np.arange(X.shape[1])
     np.random.shuffle(idx)
     parts = np.array_split(idx, K)
@@ -65,7 +91,7 @@ def rotation(X, K):
         X_ = X[:, p]
 
         # Project the data and save the weights
-        out[p, start:end] = pca(X_)
+        out[p, start:end] = pca(X_, sample_weight)
         start = end
 
     return out
