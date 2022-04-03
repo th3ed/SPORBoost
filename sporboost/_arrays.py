@@ -44,6 +44,9 @@ def row_mean(X, n=None):
     '''
     if n is None:
         n = np.full(shape=(X.shape[0], 1), fill_value=1./X.shape[0])
+    elif n.ndim == 1:
+        # Reshape
+        n = n.reshape((-1, 1))
     
     return (X * n).sum(axis=0) / n.sum()
 

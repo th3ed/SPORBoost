@@ -13,10 +13,6 @@ def gini_impurity(y):
 
 @njit(cache=True, fastmath=True)
 def _grow_tree(X, y, proj, max_depth, sample_weight, *args):
-    # Set equal weights if they are none
-    if sample_weight is None:
-        sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
-
     # Each piece of work contains a pointer to 
     # the node being processed and the index positions
     # of obs at that node
@@ -36,7 +32,6 @@ def _grow_tree(X, y, proj, max_depth, sample_weight, *args):
         for _ in range(len(node_train_idx)):
             # Get node and asociated obs
             node_idx, idx = node_train_idx.popitem()
-
             X_, y_, n_ = X[idx, :], y[idx, :], sample_weight[idx].reshape((-1, 1))
 
             # Step 1: Check if node is a leaf
@@ -54,7 +49,7 @@ def _grow_tree(X, y, proj, max_depth, sample_weight, *args):
 
             # Step 2: If node is not a leaf, find a split
             # Project data based on function
-            A = proj(X_, *args, sample_weight)
+            A = proj(X_, *args, n_)
 
             X_proj = X_ @ A
 

@@ -1,5 +1,5 @@
 from random import sample
-from numba import njit
+from numba import njit, jit
 import numpy as np
 import numpy as np
 from numba import njit
@@ -28,16 +28,14 @@ def sparse_random(X, d, s, sample_weight=None):
         bad = col_all(out == 0)
     return out
 
-@njit(cache=True, fastmath=True)
+@njit
 def pca(X, sample_weight = None):
     # Set equal weights if they are none
     if sample_weight is None:
-        sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
+        sample_weight = np.full(shape=(X.shape[0], 1), fill_value=1/X.shape[0])
     else:
         # Make sure weights are normalized
         sample_weight /= sample_weight.sum()
-
-    sample_weight = np.diag(sample_weight)
 
     # output array
     out = np.zeros(shape=(X.shape[1], X.shape[1]))
@@ -45,16 +43,12 @@ def pca(X, sample_weight = None):
     # Step 1: Center data
     X_ = X - row_mean(X, sample_weight)
 
-    # Adjustment for weights
-    # https://rdrr.io/github/mengchen18/mogsa/src/R/wsvd.R
-    X_ = np.linalg.matrix_power(sample_weight, 1/2) @ X
+    # Apply sample weights
+    # https://stats.stackexchange.com/questions/175640/pca-loading-with-weights-on-samples
+    X_ *= np.sqrt(sample_weight)
 
     # Get SVD decomposition for eigenvalues/vectors
     U, _, V = np.linalg.svd(X_, full_matrices=False)
-
-    # Adjustment for weights
-    # https://rdrr.io/github/mengchen18/mogsa/src/R/wsvd.R
-    U = np.linalg.matrix_power(sample_weight, -1/2) @ U
 
     # SVD flip method
     max_abs_cols = row_argmax(np.abs(U)).astype(np.int64).flatten()
@@ -73,7 +67,7 @@ def pca(X, sample_weight = None):
 def rotation(X, K, sample_weight=None):
     # Set equal weights if they are none
     if sample_weight is None:
-        sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
+        sample_weight = np.full(shape=(X.shape[0], 1), fill_value=1/X.shape[0])
     else:
         # Make sure weights are normalized
         sample_weight /= sample_weight.sum()

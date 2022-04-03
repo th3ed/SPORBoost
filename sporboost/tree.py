@@ -30,7 +30,8 @@ class AxisAlignedDecisionTree():
 
         if sample_weight is None:
             sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
-        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y_, identity, self.max_depth, sample_weight)
+        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y_,
+        identity, self.max_depth, sample_weight)
 
     def predict(self, X):
         return _predict_tree(self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes_)
@@ -51,7 +52,7 @@ class AxisAlignedDecisionTree():
     ('s', float64)
 ])
 class SparseRandomDecisionTree():
-    def __init__(self, d_ratio, s, max_depth = 10):
+    def __init__(self, d_ratio=1, s=3, max_depth = 10):
         self.d_ratio = d_ratio
         self.s = s
         self.max_depth = max_depth
@@ -69,7 +70,7 @@ class SparseRandomDecisionTree():
             sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
 
         d = int(X.shape[1] * self.d_ratio)
-        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y,
+        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y_,
         sparse_random, self.max_depth, sample_weight, d, self.s)
 
     def predict(self, X):
@@ -94,7 +95,7 @@ class SparseRandomDecisionTree():
     ('K', int64)
 ])
 class RotationalDecisionTree():
-    def __init__(self, K, max_depth = 10):
+    def __init__(self, K=2, max_depth = 10):
         self.K = K
         self.max_depth = max_depth
         
@@ -109,7 +110,8 @@ class RotationalDecisionTree():
 
         if sample_weight is None:
             sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
-        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y, rotation, self.max_depth, sample_weight, self.K)
+        self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y_,
+        rotation, self.max_depth, sample_weight, self.K)
 
     def predict(self, X):
         return _predict_tree(self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes_)
