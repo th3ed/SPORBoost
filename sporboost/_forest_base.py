@@ -38,6 +38,9 @@ def _ada_alpha(eta, n_classes):
 
 @njit(cache=True, fastmath=True)
 def _ada_weight_update(y_true, y_pred, D, eta, miss, n_classes):
+    # Min weight to prevent div by zeros later
+    min_weight = 1e-8
+
     alpha = _ada_alpha(eta, n_classes)
 
     # Check if we are upweighting or downweighting
@@ -46,6 +49,7 @@ def _ada_weight_update(y_true, y_pred, D, eta, miss, n_classes):
 
     # Compute non-normalized weight updates
     D_new = D * np.exp(scalar)
+    D_new[D_new < min_weight] = min_weight
 
     D_new /= D_new.sum()
 

@@ -49,12 +49,12 @@ class AxisAlignedDecisionTree():
 
 @jitclass(dt_spec + [
     ('d_ratio', float64),
-    ('s', float64)
+    ('s_ratio', float64)
 ])
 class SparseRandomDecisionTree():
-    def __init__(self, d_ratio=1, s=3, max_depth = 10):
+    def __init__(self, d_ratio=1, s_ratio=1., max_depth = 10):
         self.d_ratio = d_ratio
-        self.s = s
+        self.s_ratio = s_ratio
         self.max_depth = max_depth
         
     def fit(self, X, y, sample_weight=None):
@@ -69,9 +69,10 @@ class SparseRandomDecisionTree():
         if sample_weight is None:
             sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
 
-        d = int(X.shape[1] * self.d_ratio)
+        d = max(int(X.shape[1] * self.d_ratio), 1)
+        s = self.s_ratio / X.shape[1]
         self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y_,
-        sparse_random, self.max_depth, sample_weight, d, self.s)
+        sparse_random, self.max_depth, sample_weight, d, s)
 
     def predict(self, X):
         return _predict_tree(self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes_)
@@ -80,13 +81,15 @@ class SparseRandomDecisionTree():
         return _predict_proba_tree(self.tree_value, self.tree_split, self.tree_proj, X, self.n_classes_)
 
     def get_params(self, deep=True):
-        return {'max_depth' : self.max_depth, 'd_ratio' : self.d_ratio, 's' : self.s}
+        return {'max_depth' : self.max_depth,
+        'd_ratio' : self.d_ratio,
+        's_ratio' : self.s_ratio}
 
-    def set_params(self, max_depth = None, s = None, d_ratio = None):
+    def set_params(self, max_depth = None, s_ratio = None, d_ratio = None):
         if max_depth is not None:
             self.max_depth = max_depth
-        if s is not None:
-            self.s = s
+        if s_ratio is not None:
+            self.s_ratio = s_ratio
         if d_ratio is not None:
             self.d_ratio = d_ratio
         return self
