@@ -1,3 +1,1 @@
-# Adv_ML_Project
-
-Ed Andrews Advanced ML Course Project
+# Sparse Projection Oblique Randomer Forest
