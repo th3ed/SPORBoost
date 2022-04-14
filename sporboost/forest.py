@@ -377,13 +377,14 @@ class RotBoost():
             self.K = K
         return self
 
-class SPORBoost():
-    def __init__(self, d_ratio=1., s_ratio=1., n_trees = 500, max_depth = 1, seed = 1234):
+class SPORBoostHC():
+    def __init__(self, d_ratio=1., s_ratio=1., n_trees = 500, max_depth = 1, hc_stop = 2, seed = 1234):
         self.n_trees = n_trees
         self.max_depth = max_depth
         self.seed = seed
         self.s_ratio = s_ratio
         self.d_ratio = d_ratio
+        self.hc_stop = hc_stop
 
     def fit(self, X, y):
         if y.ndim == 2:
@@ -403,38 +404,35 @@ class SPORBoost():
         D = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
 
         for idx_forest in range(self.n_trees):
+            # Hill Climbing
+            # Attempt to improve the fit, stop after n iterations
+            round = 0
+            best_eta = 1.
+            while round < self.hc_stop:
+                # Init and train a tree
+                # Use weighted obs for training boosted trees
+                tree = SparseRandomDecisionTree(self.d_ratio,
+                                                self.s_ratio,
+                                                self.max_depth)
 
-            # Init and train a tree
-            # Use weighted obs for training boosted trees
-            # Fit a tree under each method, then select the one that has the lowest
-            # misclassification rate
-            tree_aa = AxisAlignedDecisionTree(self.max_depth)
-            tree_aa.fit(X, y_, D)
-            tree_sr = SparseRandomDecisionTree(self.d_ratio, self.s_ratio, self.max_depth)
-            tree_sr.fit(X, y_, D)
+                tree.fit(X, y_, D)
 
-            # Check which algo produced the lower misclassification rate
-            y_pred_aa = tree_aa.predict(X)
-            miss_aa = _ada_misclassified(y_, y_pred_aa)
-            y_pred_sr = tree_sr.predict(X)
-            miss_sr = _ada_misclassified(y_, y_pred_sr)
+                # Update weights based on forest errors
+                y_pred = tree.predict(X)
 
-            # Select between the algos given the misclassification rate
-            weights = np.array([miss_aa.sum(), miss_sr.sum()])
-            weights = 1 - weights / weights.sum()
-            draw = np.random.choice(['aa', 'sr'], size=1, p=weights.flatten())
+                # Perform a weight update
+                miss = _ada_misclassified(y_, y_pred)
+                eta = _ada_eta(miss, D)
 
-            if draw == 'aa':
-                forest[idx_forest] = tree_aa
-                y_pred = y_pred_aa
-                miss = miss_aa
-            elif draw == 'sr':
-                forest[idx_forest] = tree_sr
-                y_pred = y_pred_sr
-                miss = miss_sr
-
-            # With the algo selected, set the tree, compute eta and update the weights
-            eta = _ada_eta(miss, D)
+                # Check if we beat the current best model
+                if eta < best_eta:
+                    # Update the model
+                    forest[idx_forest] = tree
+                    best_eta = eta
+                    round = 0
+                else:
+                    # Not better, increment count and test further
+                    round += 1
             
             # Discard rules
             # https://github.com/scikit-learn/scikit-learn/blob/37ac6788
@@ -474,3 +472,4 @@ class SPORBoost():
         if d_ratio is not None:
             self.d_ratio = d_ratio
         return self
+        
