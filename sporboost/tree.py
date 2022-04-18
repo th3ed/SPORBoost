@@ -69,7 +69,7 @@ class SparseRandomDecisionTree():
         if sample_weight is None:
             sample_weight = np.full(shape=(X.shape[0]), fill_value=1/X.shape[0])
 
-        d = max(int(X.shape[1] * self.d_ratio), 1)
+        d = max(int(X.shape[1] ** self.d_ratio), 1)
         s = X.shape[1] / self.s_ratio # 1/S = lambda
         self.tree_value, self.tree_split, self.tree_proj = _grow_tree(X, y_,
         sparse_random, self.max_depth, sample_weight, d, s)
